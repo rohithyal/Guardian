@@ -85,17 +85,19 @@ jobs:
       - run: pip install -e ".[dev]"
       - name: Secret scan source tree
         run: |
-          python -c "
-import json, sys
-from src.server.tools.secret_scanner import run_secret_scan
-r = run_secret_scan(target="src/")
-with open("secret_scan_report.json", "w") as f: json.dump(r, f, indent=2)
-crit = r["summary"]["severity_breakdown"].get("CRITICAL", 0)
-if crit > 0:
-    print(f"::error::Found {crit} CRITICAL secret(s)!")
-    sys.exit(1)
-print(f"Secret scan CLEAN — {r["summary"]["files_scanned"]} files scanned")
-"
+          python - <<'PYEOF'
+          import json, sys
+          from src.server.tools.secret_scanner import run_secret_scan
+          r = run_secret_scan(target='src/')
+          with open('secret_scan_report.json', 'w') as f:
+              json.dump(r, f, indent=2)
+          crit = r['summary']['severity_breakdown'].get('CRITICAL', 0)
+          if crit > 0:
+              print(f'::error::Found {crit} CRITICAL secret(s)!')
+              sys.exit(1)
+          files_scanned = r['summary']['files_scanned']
+          print(f'Secret scan CLEAN — {files_scanned} files scanned')
+          PYEOF
       - name: Upload scan reports
         if: always()
         uses: actions/upload-artifact@v4
