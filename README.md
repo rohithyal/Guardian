@@ -26,7 +26,10 @@ Give it a JSON description of your system — components, data flows, which serv
 Feed it a list of security findings. It maps each one to the specific NIST SP 800-53 Rev 5 controls and OWASP Top 10 2021 categories that are triggered. The output tells you not just "you have a SQL injection" but "this triggers A03:2021 and SI-10, your remediation timeline is 4 hours."
 
 **Secret Scanning**  
-Point it at a directory. It walks your source tree, applies 16 regex patterns (AWS keys, GitHub tokens, Google API keys, Stripe keys, database connection strings, JWT tokens, PEM private keys, and more), runs Shannon entropy analysis to cut false positives, and tells you exactly which file and line number the problem is on — with the credential redacted so the report itself doesn't become a liability.
+Point it at a directory. It walks your source tree, applies 16 regex patterns (AWS keys, GitHub tokens, Google API keys, Stripe keys, database connection strings, JWT tokens, PEM private keys, and more), runs Shannon entropy analysis to cut false positives, and tells you exactly which file and line number the problem is on — with the credential redacted so the report itself doesn't become a liability. Output can be returned as **SARIF 2.1.0** for direct integration with GitHub Code Scanning and IDE extensions.
+
+**Git History Scanning**  
+Secrets removed from HEAD are still in your git history — and if the repo was ever public, they're already compromised. This tool runs `git log -p` through the same 16-pattern engine, reports findings by commit hash, author, and date, and tells you exactly when each credential was introduced. Essential before any public release or security audit.
 
 ---
 
@@ -39,7 +42,7 @@ You (terminal)
     ↓
 consultant.py       ← Google Gemini via LangChain, ReAct agent loop
     ↓  stdio
-main.py             ← FastMCP server, 4 registered tools
+main.py             ← FastMCP server, 5 registered tools
     ↓
 sca.py  threat_model.py  compliance.py  secret_scanner.py
     ↓
@@ -91,6 +94,7 @@ You'll see the Guardian banner and a prompt. Try:
 🛡 You: scan ./requirements.txt for vulnerabilities
 🛡 You: generate a threat model for a REST API with PostgreSQL, exposed to the internet
 🛡 You: scan the ./src directory for hardcoded secrets
+🛡 You: scan the git history of this repo for any secrets that were ever committed
 🛡 You: run a full security review — deps, threats, and compliance
 ```
 
@@ -134,12 +138,12 @@ python -m pytest --cov=src --cov-report=term-missing
 ```
 src/
 ├── server/
-│   ├── main.py                  FastMCP server, tool registrations
+│   ├── main.py                  FastMCP server, 5 registered tools
 │   └── tools/
-│       ├── sca.py               Dependency vulnerability scanning
+│       ├── sca.py               Dependency scanning — OSV live API or offline mock
 │       ├── threat_model.py      STRIDE/DREAD threat modeling engine
 │       ├── compliance.py        NIST 800-53 + OWASP Top 10 mapper
-│       └── secret_scanner.py    Regex + entropy credential detection
+│       └── secret_scanner.py    Regex + entropy detection, SARIF output, git history scan
 ├── utils/
 │   ├── helpers.py               Secret patterns, OSV mock DB, shared utilities
 │   └── context_manager.py       Token budget management, state persistence
@@ -150,6 +154,9 @@ data/
 └── policies/
     ├── nist_800_53.yaml          NIST control → finding type mappings
     └── owasp_top10.yaml          OWASP category → finding type triggers
+
+scripts/
+└── build_graph.py               Generates PROJECT_GRAPH.json + GRAPH_SUMMARY.md
 
 tests/                           137 tests, zero external dependencies
 ```
@@ -166,12 +173,13 @@ Copy `.env.example` to `.env` and set these variables:
 | `GEMINI_MODEL` | `gemini-1.5-pro` | Model to use |
 | `TEMPERATURE` | `0.2` | Lower = more deterministic |
 | `MAX_TOKENS` | `8192` | Max tokens per LLM response |
+| `GUARDIAN_LIVE_OSV` | unset | Set to `true` to query osv.dev live instead of the offline mock |
 
 ---
 
 ## Security decisions worth knowing
 
-**The OSV database is mocked.** `helpers.py` contains a hand-curated set of real CVEs for common packages (requests, flask, django, pyyaml, lodash, webpack, etc.). In a production deployment you'd replace the `_query_osv` function with a real POST to `https://api.osv.dev/v1/query`. The mock is there so everything works offline and tests don't make network calls.
+**The OSV database has two modes.** By default it uses a curated offline mock (real CVE data for ~15 common packages) so everything works without network access and tests stay deterministic. Set `GUARDIAN_LIVE_OSV=true` in `.env` to query `https://api.osv.dev/v1/query` live for any package in any ecosystem. If the API is unreachable, it falls back to the mock automatically — the tool never hard-fails due to a network issue.
 
 **Secrets are redacted in reports.** When the scanner finds a credential, it shows `AKIAT1***B7X` — the first 6 characters and last 3, with the middle replaced. The file path and line number are reported so you can locate and rotate the credential, but the report itself won't contain anything you'd regret sharing.
 
@@ -193,6 +201,10 @@ Copy `.env.example` to `.env` and set these variables:
 
 **Add a new MCP tool**: Write the business logic function, add a Pydantic input model, then register it with `@mcp.tool()` in `main.py`. The MCP client will discover it automatically.
 
+**Enable live vulnerability data**: Set `GUARDIAN_LIVE_OSV=true` in `.env`. The scanner will query osv.dev for every package, covering the full ecosystem rather than just the curated mock set. Falls back to mock on network errors.
+
+**Use SARIF output for CI integration**: Call `scan_secrets` with `output_format="sarif"` to get a SARIF 2.1.0 response. Upload the result to GitHub Code Scanning via the `upload-sarif` action and findings will appear directly in your pull request review UI.
+
 ---
 
 ## Tech stack
@@ -205,7 +217,7 @@ Copy `.env.example` to `.env` and set these variables:
 | Input Validation | Pydantic v2 |
 | Terminal UI | Rich |
 | Compliance Data | YAML (NIST 800-53, OWASP Top 10) |
-| Vulnerability Data | OSV mock (production: osv.dev API) |
+| Vulnerability Data | OSV mock (offline default) + osv.dev live API (opt-in) |
 | Testing | pytest, 137 tests |
 | Build | Hatchling |
 | Python | 3.11+ |
