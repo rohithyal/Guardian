@@ -19,13 +19,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 
-# Copy dependency specs first (leverages Docker layer cache)
+# Copy only what pip needs to resolve and build the package.
+# pyproject.toml first so dependency-only layers can be cached separately.
 COPY pyproject.toml ./
+COPY src/ ./src/
 
-# Install all dependencies into an isolated prefix
+# Install runtime dependencies into an isolated prefix that gets
+# copied into the production image (keeps the final image slim).
 RUN pip install --upgrade pip \
-    && pip install --no-cache-dir --prefix=/install . \
-    && pip install --no-cache-dir --prefix=/install ".[dev]" 2>/dev/null || true
+    && pip install --no-cache-dir --prefix=/install .
 
 
 # ── Stage 2: Production Runtime ─────────────────────────────────────────────
