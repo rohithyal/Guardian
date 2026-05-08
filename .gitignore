@@ -45,5 +45,8 @@ Thumbs.db
 # Guardian session state (checkpoints may contain scan results)
 .guardian_state/
 
+# Local-only documentation
+HANDBOOK.md
+
 # Docker
 .dockerignore
