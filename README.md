@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/rohithyal/Guardian/actions/workflows/ci.yml/badge.svg)
 
-An AI-powered security automation tool that catches vulnerabilities, hardcoded secrets, compliance gaps, and architectural threats — before they reach production.
+An AI-powered security automation tool that catches vulnerabilities, hardcoded secrets, compliance gaps, and architectural threats before they reach production.
 
 ---
 
