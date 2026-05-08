@@ -33,6 +33,9 @@ Point it at a directory. It walks your source tree, applies 16 regex patterns (A
 **Git History Scanning**
 Secrets removed from HEAD are still in your git history — and if the repo was ever public, they're already compromised. This tool runs `git log -p` through the same 16-pattern engine, reports findings by commit hash, author, and date, and tells you exactly when each credential was introduced. Essential before any public release or security audit.
 
+**IaC Misconfiguration Scanning**
+Point it at a directory, a Dockerfile, or a docker-compose file. It evaluates 17 security rules — 9 for Dockerfiles (running as root, floating image tags, curl-pipe-bash, ADD vs COPY, apt-get without `--no-install-recommends`, secrets in ENV/ARG, chmod 777, missing HEALTHCHECK, sudo) and 8 for docker-compose (privileged mode, host networking, Docker socket mount, sensitive host path mounts, all-interface port bindings, missing resource limits, cap_add ALL, missing no-new-privileges). Returns a prioritised report with rule IDs, file locations, and remediation steps.
+
 ---
 
 ## Architecture
@@ -44,9 +47,9 @@ You (terminal)
     ↓
 consultant.py       ← Google Gemini via LangChain, ReAct agent loop
     ↓  stdio
-main.py             ← FastMCP server, 5 registered tools
+main.py             ← FastMCP server, 6 registered tools
     ↓
-sca.py  threat_model.py  compliance.py  secret_scanner.py
+sca.py  threat_model.py  compliance.py  secret_scanner.py  iac_scanner.py
     ↓
 helpers.py          ← shared patterns, OSV mock database
 context_manager.py  ← token budget, state persistence
@@ -97,6 +100,7 @@ You'll see the Guardian banner and a prompt. Try:
 🛡 You: generate a threat model for a REST API with PostgreSQL, exposed to the internet
 🛡 You: scan the ./src directory for hardcoded secrets
 🛡 You: scan the git history of this repo for any secrets that were ever committed
+🛡 You: scan the Dockerfile and docker-compose.yml for misconfigurations
 🛡 You: run a full security review — deps, threats, and compliance
 ```
 
@@ -154,7 +158,7 @@ python -m pytest tests/test_context_manager.py -v
 python -m pytest --cov=src --cov-report=term-missing
 ```
 
-137 tests, 6 test files. No external services required — the vulnerability database is mocked, the YAML policy files are local.
+186 tests, 7 test files. No external services required — the vulnerability database is mocked, the YAML policy files are local.
 
 ---
 
@@ -163,12 +167,13 @@ python -m pytest --cov=src --cov-report=term-missing
 ```
 src/
 ├── server/
-│   ├── main.py                  FastMCP server, 5 registered tools
+│   ├── main.py                  FastMCP server, 6 registered tools
 │   └── tools/
 │       ├── sca.py               Dependency scanning — OSV live API or offline mock
 │       ├── threat_model.py      STRIDE/DREAD threat modeling engine
 │       ├── compliance.py        NIST 800-53 + OWASP Top 10 mapper
-│       └── secret_scanner.py    Regex + entropy detection, SARIF output, git history scan
+│       ├── secret_scanner.py    Regex + entropy detection, SARIF output, git history scan
+│       └── iac_scanner.py       Dockerfile + docker-compose misconfiguration scanner (17 rules)
 ├── utils/
 │   ├── helpers.py               Secret patterns, OSV mock DB, shared utilities
 │   └── context_manager.py       Token budget management, state persistence
@@ -188,7 +193,7 @@ scripts/
     ├── ci.yml                   Push/PR pipeline (lint, test, self-scan, Docker)
     └── scheduled_audit.yml      Weekly SCA + secret scan with auto issue creation
 
-tests/                           137 tests, zero external dependencies
+tests/                           186 tests, zero external dependencies
 ```
 
 ---
@@ -233,6 +238,8 @@ Copy `.env.example` to `.env` and set these variables:
 
 **Add a new MCP tool**: Write the business logic function, add a Pydantic input model, then register it with `@mcp.tool()` in `main.py`. The MCP client will discover it automatically.
 
+**Add a new IaC rule**: Open `src/server/tools/iac_scanner.py` and add an `IaCRule` dataclass entry to `DOCKERFILE_RULES` or `COMPOSE_RULES`. Then add the detection logic in `_scan_dockerfile()` or `_scan_compose()`. The report, severity ranking, and remediation output are all automatic.
+
 **Enable live vulnerability data**: Set `GUARDIAN_LIVE_OSV=true` in `.env`. The scanner will query osv.dev for every package, covering the full ecosystem rather than just the curated mock set. Falls back to mock on network errors.
 
 **Use SARIF output for CI integration**: Call `scan_secrets` with `output_format="sarif"` to get a SARIF 2.1.0 response. Upload the result to GitHub Code Scanning via the `upload-sarif` action and findings will appear directly in your pull request review UI.
@@ -250,7 +257,7 @@ Copy `.env.example` to `.env` and set these variables:
 | Terminal UI | Rich |
 | Compliance Data | YAML (NIST 800-53, OWASP Top 10) |
 | Vulnerability Data | OSV mock (offline default) + osv.dev live API (opt-in) |
-| Testing | pytest, 137 tests |
+| Testing | pytest, 186 tests |
 | Lint / Format | Ruff |
 | CI/CD | GitHub Actions (lint, test, self-scan, Docker) |
 | Build | Hatchling |
