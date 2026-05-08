@@ -19,15 +19,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 
+# Create an isolated venv — cleaner than --prefix and works correctly
+# with compiled extensions at any path.
+RUN python -m venv /venv
+ENV PATH="/venv/bin:$PATH"
+
 # Copy only what pip needs to resolve and build the package.
 # pyproject.toml first so dependency-only layers can be cached separately.
 COPY pyproject.toml ./
 COPY src/ ./src/
 
-# Install runtime dependencies into an isolated prefix that gets
-# copied into the production image (keeps the final image slim).
+# Install runtime dependencies into the venv.
 RUN pip install --upgrade pip \
-    && pip install --no-cache-dir --prefix=/install .
+    && pip install --no-cache-dir .
 
 
 # ── Stage 2: Production Runtime ─────────────────────────────────────────────
@@ -44,8 +48,9 @@ LABEL org.opencontainers.image.title="Guardian S-SDLC Orchestrator" \
 RUN groupadd --gid 1001 guardian \
     && useradd --uid 1001 --gid guardian --shell /bin/bash --create-home guardian
 
-# Copy installed packages from builder stage
-COPY --from=builder /install /usr/local
+# Copy the venv from builder stage
+COPY --from=builder /venv /venv
+ENV PATH="/venv/bin:$PATH"
 
 WORKDIR /app
 
@@ -72,9 +77,8 @@ ENV PYTHONUNBUFFERED=1 \
     MAX_TOKENS=8192
 
 # Default: run the interactive AI consultant
-# Override to run just the server: docker run guardian guardian-server
-ENTRYPOINT ["python", "-m"]
-CMD ["src.client.consultant"]
+# Override CMD at runtime: docker run guardian python -m src.server.main
+CMD ["python", "-m", "src.client.consultant"]
 
 
 # ── Stage 3: Development / Testing ──────────────────────────────────────────
@@ -82,9 +86,9 @@ FROM production AS development
 
 USER root
 
-# Install dev dependencies
+# Install dev dependencies into the same venv
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir ".[dev]"
+RUN pip install --no-cache-dir ".[dev]"  # PATH already includes /venv/bin
 
 # Install additional dev tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -99,4 +103,4 @@ RUN chown -R guardian:guardian /app
 USER guardian
 
 # Default command in dev stage: run the test suite
-CMD ["pytest", "tests/", "-v", "--cov=src", "--cov-report=term-missing"]
+CMD ["python", "-m", "pytest", "tests/", "-v", "--cov=src", "--cov-report=term-missing"]
