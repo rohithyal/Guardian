@@ -187,7 +187,7 @@ def print_examples() -> None:
     ]
     console.print(
         Panel(
-            "\n".join(f"  [cyan]{i+1}.[/cyan] {e}" for i, e in enumerate(examples)),
+            "\n".join(f"  [cyan]{i + 1}.[/cyan] {e}" for i, e in enumerate(examples)),
             title="[bold yellow]Example Prompts[/bold yellow]",
             border_style="yellow",
         )
@@ -216,6 +216,7 @@ def print_tools() -> None:
 # ──────────────────────────────────────────────────────────────────
 # Agent Interaction
 # ──────────────────────────────────────────────────────────────────
+
 
 async def stream_agent_response(agent: Any, user_input: str, history: list) -> list:
     """
@@ -275,6 +276,7 @@ async def stream_agent_response(agent: Any, user_input: str, history: list) -> l
 # ──────────────────────────────────────────────────────────────────
 # Main REPL
 # ──────────────────────────────────────────────────────────────────
+
 
 async def run_consultant(show_banner: bool = True) -> None:
     """Main async entry-point for the interactive security consultant."""

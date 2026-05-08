@@ -7,6 +7,7 @@ Tests cover: happy path, edge cases, malformed input, and boundary conditions.
 Run with:
     pytest tests/ -v --cov=src
 """
+
 from __future__ import annotations
 
 import json
@@ -20,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # SCA Tool Tests
 # ---------------------------------------------------------------------------
 
+
 class TestSCADependencyCheck:
     """Tests for the Software Composition Analysis tool."""
 
@@ -31,8 +33,8 @@ class TestSCADependencyCheck:
         req_file.write_text(
             "flask==2.2.0\n"
             "requests==2.28.0\n"
-            "pyyaml==5.4.1\n"   # Known CRITICAL CVE
-            "boto3==1.26.0\n"   # No known CVE in mock DB
+            "pyyaml==5.4.1\n"  # Known CRITICAL CVE
+            "boto3==1.26.0\n"  # No known CVE in mock DB
         )
 
         result = run_dependency_check(str(req_file))
@@ -42,9 +44,7 @@ class TestSCADependencyCheck:
         assert result["total_dependencies"] == 4
         assert result["vulnerable_count"] > 0
         # pyyaml 5.4.1 < 6.0 should trigger CRITICAL
-        critical_findings = [
-            f for f in result["findings"] if f["severity"] == "CRITICAL"
-        ]
+        critical_findings = [f for f in result["findings"] if f["severity"] == "CRITICAL"]
         assert len(critical_findings) >= 1
         assert any(f["package"] == "pyyaml" for f in critical_findings)
 
@@ -53,11 +53,7 @@ class TestSCADependencyCheck:
         from src.server.tools.sca import run_dependency_check
 
         req_file = tmp_path / "requirements.txt"
-        req_file.write_text(
-            "boto3==1.26.0\n"
-            "pandas==2.0.0\n"
-            "numpy==1.26.0\n"
-        )
+        req_file.write_text("boto3==1.26.0\npandas==2.0.0\nnumpy==1.26.0\n")
 
         result = run_dependency_check(str(req_file))
 
@@ -70,18 +66,22 @@ class TestSCADependencyCheck:
         from src.server.tools.sca import run_dependency_check
 
         pkg_file = tmp_path / "package.json"
-        pkg_file.write_text(json.dumps({
-            "name": "test-app",
-            "version": "1.0.0",
-            "dependencies": {
-                "lodash": "4.17.20",    # < 4.17.21 — HIGH CVE
-                "axios": "1.5.0",       # < 1.6.0 — MEDIUM CVE
-                "react": "18.2.0",      # No CVE in mock DB
-            },
-            "devDependencies": {
-                "jest": "29.0.0",
-            }
-        }))
+        pkg_file.write_text(
+            json.dumps(
+                {
+                    "name": "test-app",
+                    "version": "1.0.0",
+                    "dependencies": {
+                        "lodash": "4.17.20",  # < 4.17.21 — HIGH CVE
+                        "axios": "1.5.0",  # < 1.6.0 — MEDIUM CVE
+                        "react": "18.2.0",  # No CVE in mock DB
+                    },
+                    "devDependencies": {
+                        "jest": "29.0.0",
+                    },
+                }
+            )
+        )
 
         result = run_dependency_check(str(pkg_file))
 
@@ -97,10 +97,14 @@ class TestSCADependencyCheck:
         from src.server.tools.sca import run_dependency_check
 
         pkg_file = tmp_path / "package.json"
-        pkg_file.write_text(json.dumps({
-            "dependencies": {"react": "18.0.0"},
-            "devDependencies": {"semver": "7.0.0"},  # < 7.5.2 — MEDIUM CVE
-        }))
+        pkg_file.write_text(
+            json.dumps(
+                {
+                    "dependencies": {"react": "18.0.0"},
+                    "devDependencies": {"semver": "7.0.0"},  # < 7.5.2 — MEDIUM CVE
+                }
+            )
+        )
 
         result_no_dev = run_dependency_check(str(pkg_file), include_dev_dependencies=False)
         result_with_dev = run_dependency_check(str(pkg_file), include_dev_dependencies=True)
@@ -157,27 +161,30 @@ class TestSCADependencyCheck:
 # Threat Model Tool Tests
 # ---------------------------------------------------------------------------
 
+
 class TestThreatModel:
     """Tests for the STRIDE threat modeling engine."""
 
-    SAMPLE_ARCH = json.dumps({
-        "system_name": "E-Commerce API",
-        "description": "Online marketplace backend",
-        "components": [
-            {
-                "name": "Payment Service",
-                "type": "api",
-                "technologies": ["Python", "FastAPI"],
-                "exposed_to_internet": True,
-                "handles_pii": True,
-                "handles_payment": True,
-                "authenticated": True,
-                "data_flows": ["client -> payment_api", "payment_api -> db"],
-            }
-        ],
-        "trust_boundaries": ["internet", "internal_network"],
-        "compliance_requirements": ["PCI-DSS"],
-    })
+    SAMPLE_ARCH = json.dumps(
+        {
+            "system_name": "E-Commerce API",
+            "description": "Online marketplace backend",
+            "components": [
+                {
+                    "name": "Payment Service",
+                    "type": "api",
+                    "technologies": ["Python", "FastAPI"],
+                    "exposed_to_internet": True,
+                    "handles_pii": True,
+                    "handles_payment": True,
+                    "authenticated": True,
+                    "data_flows": ["client -> payment_api", "payment_api -> db"],
+                }
+            ],
+            "trust_boundaries": ["internet", "internal_network"],
+            "compliance_requirements": ["PCI-DSS"],
+        }
+    )
 
     def test_generates_stride_threats(self) -> None:
         """Should produce all 6 STRIDE categories per component."""
@@ -198,8 +205,7 @@ class TestThreatModel:
 
         # Payment-handling + internet-exposed = expect CRITICAL or HIGH threats
         high_or_critical = [
-            t for t in result["threat_findings"]
-            if t["risk_rating"] in ("CRITICAL", "HIGH")
+            t for t in result["threat_findings"] if t["risk_rating"] in ("CRITICAL", "HIGH")
         ]
         assert len(high_or_critical) >= 3
 
@@ -216,22 +222,42 @@ class TestThreatModel:
         """Should generate 6N threats for N components."""
         from src.server.tools.threat_model import run_threat_model
 
-        arch = json.dumps({
-            "system_name": "Microservices Platform",
-            "components": [
-                {"name": "Frontend", "type": "web_app", "technologies": ["React"],
-                 "exposed_to_internet": True, "handles_pii": False, "handles_payment": False,
-                 "authenticated": False},
-                {"name": "Auth Service", "type": "auth_service", "technologies": ["Node.js"],
-                 "exposed_to_internet": False, "handles_pii": True, "handles_payment": False,
-                 "authenticated": True},
-                {"name": "Database", "type": "database", "technologies": ["PostgreSQL"],
-                 "exposed_to_internet": False, "handles_pii": True, "handles_payment": False,
-                 "authenticated": True},
-            ],
-            "trust_boundaries": ["internet", "internal"],
-            "compliance_requirements": [],
-        })
+        arch = json.dumps(
+            {
+                "system_name": "Microservices Platform",
+                "components": [
+                    {
+                        "name": "Frontend",
+                        "type": "web_app",
+                        "technologies": ["React"],
+                        "exposed_to_internet": True,
+                        "handles_pii": False,
+                        "handles_payment": False,
+                        "authenticated": False,
+                    },
+                    {
+                        "name": "Auth Service",
+                        "type": "auth_service",
+                        "technologies": ["Node.js"],
+                        "exposed_to_internet": False,
+                        "handles_pii": True,
+                        "handles_payment": False,
+                        "authenticated": True,
+                    },
+                    {
+                        "name": "Database",
+                        "type": "database",
+                        "technologies": ["PostgreSQL"],
+                        "exposed_to_internet": False,
+                        "handles_pii": True,
+                        "handles_payment": False,
+                        "authenticated": True,
+                    },
+                ],
+                "trust_boundaries": ["internet", "internal"],
+                "compliance_requirements": [],
+            }
+        )
 
         result = run_threat_model(arch)
         assert result["total_threats"] == 18  # 3 components × 6 STRIDE
@@ -268,6 +294,7 @@ class TestThreatModel:
 # Compliance Audit Tool Tests
 # ---------------------------------------------------------------------------
 
+
 class TestComplianceAudit:
     """Tests for the NIST/OWASP compliance mapping tool."""
 
@@ -275,9 +302,9 @@ class TestComplianceAudit:
         """vulnerable_dependency should map to NIST SI-2."""
         from src.server.tools.compliance import run_compliance_audit
 
-        findings = json.dumps([
-            {"category": "vulnerable_dependency", "severity": "HIGH", "component": "API"}
-        ])
+        findings = json.dumps(
+            [{"category": "vulnerable_dependency", "severity": "HIGH", "component": "API"}]
+        )
         result = run_compliance_audit(findings)
 
         assert result["total_findings"] == 1
@@ -289,9 +316,9 @@ class TestComplianceAudit:
         """hardcoded_credentials should map to OWASP A02 and A07."""
         from src.server.tools.compliance import run_compliance_audit
 
-        findings = json.dumps([
-            {"category": "hardcoded_credentials", "severity": "CRITICAL", "component": "Backend"}
-        ])
+        findings = json.dumps(
+            [{"category": "hardcoded_credentials", "severity": "CRITICAL", "component": "Backend"}]
+        )
         result = run_compliance_audit(findings)
 
         gap = result["compliance_gaps"][0]
@@ -302,9 +329,9 @@ class TestComplianceAudit:
         """CRITICAL severity findings should always produce NON_COMPLIANT status."""
         from src.server.tools.compliance import run_compliance_audit
 
-        findings = json.dumps([
-            {"category": "hardcoded_credentials", "severity": "CRITICAL", "component": "Server"}
-        ])
+        findings = json.dumps(
+            [{"category": "hardcoded_credentials", "severity": "CRITICAL", "component": "Server"}]
+        )
         result = run_compliance_audit(findings)
 
         gap = result["compliance_gaps"][0]
@@ -314,11 +341,13 @@ class TestComplianceAudit:
         """Multiple findings should each produce their own compliance gap."""
         from src.server.tools.compliance import run_compliance_audit
 
-        findings = json.dumps([
-            {"category": "vulnerable_dependency", "severity": "HIGH", "component": "Frontend"},
-            {"category": "missing_auth", "severity": "HIGH", "component": "API"},
-            {"category": "missing_logging", "severity": "MEDIUM", "component": "Backend"},
-        ])
+        findings = json.dumps(
+            [
+                {"category": "vulnerable_dependency", "severity": "HIGH", "component": "Frontend"},
+                {"category": "missing_auth", "severity": "HIGH", "component": "API"},
+                {"category": "missing_logging", "severity": "MEDIUM", "component": "Backend"},
+            ]
+        )
         result = run_compliance_audit(findings)
 
         assert result["total_findings"] == 3
@@ -328,9 +357,9 @@ class TestComplianceAudit:
         """CRITICAL finding should trigger CRITICAL_NON_COMPLIANCE posture."""
         from src.server.tools.compliance import run_compliance_audit
 
-        findings = json.dumps([
-            {"category": "sqli", "severity": "CRITICAL", "component": "Database API"}
-        ])
+        findings = json.dumps(
+            [{"category": "sqli", "severity": "CRITICAL", "component": "Database API"}]
+        )
         result = run_compliance_audit(findings)
 
         assert result["overall_posture"] == "CRITICAL_NON_COMPLIANCE"
@@ -339,22 +368,25 @@ class TestComplianceAudit:
         """Remediation timelines should be present when include_remediation_timeline=True."""
         from src.server.tools.compliance import run_compliance_audit
 
-        findings = json.dumps([
-            {"category": "insecure_transport", "severity": "HIGH", "component": "Web Server"}
-        ])
+        findings = json.dumps(
+            [{"category": "insecure_transport", "severity": "HIGH", "component": "Web Server"}]
+        )
         result = run_compliance_audit(findings, include_remediation_timeline=True)
 
         gap = result["compliance_gaps"][0]
         assert gap["remediation_timeline"] != ""
-        assert "hour" in gap["remediation_timeline"].lower() or "day" in gap["remediation_timeline"].lower()
+        assert (
+            "hour" in gap["remediation_timeline"].lower()
+            or "day" in gap["remediation_timeline"].lower()
+        )
 
     def test_nist_only_framework(self) -> None:
         """When only NIST-800-53 is requested, OWASP risks should be empty."""
         from src.server.tools.compliance import run_compliance_audit
 
-        findings = json.dumps([
-            {"category": "missing_auth", "severity": "HIGH", "component": "API"}
-        ])
+        findings = json.dumps(
+            [{"category": "missing_auth", "severity": "HIGH", "component": "API"}]
+        )
         result = run_compliance_audit(findings, frameworks=["NIST-800-53"])
 
         gap = result["compliance_gaps"][0]
@@ -365,6 +397,7 @@ class TestComplianceAudit:
 # ---------------------------------------------------------------------------
 # Secret Scanner Tool Tests
 # ---------------------------------------------------------------------------
+
 
 class TestSecretScanner:
     """Tests for the regex-based secret scanning tool."""
@@ -409,7 +442,9 @@ class TestSecretScanner:
 
         result = run_secret_scan(str(tmp_path))
         assert result["scan_status"] == "COMPLETED"
-        private_key_findings = [f for f in result["findings"] if "RSA Private Key" in f["pattern_name"]]
+        private_key_findings = [
+            f for f in result["findings"] if "RSA Private Key" in f["pattern_name"]
+        ]
         assert len(private_key_findings) >= 1
         # RSA key exposure should be CRITICAL
         assert private_key_findings[0]["severity"] == "CRITICAL"
@@ -421,7 +456,7 @@ class TestSecretScanner:
         test_file = tmp_path / "notes.py"
         test_file.write_text(
             '# Example: AWS_KEY = "AKIAIOSFODNN7EXAMPLE"\n'
-            '# Don\'t use real keys here\n'
+            "# Don't use real keys here\n"
             'aws_key = os.getenv("AWS_ACCESS_KEY_ID")\n'
         )
 
@@ -439,7 +474,9 @@ class TestSecretScanner:
         # Create files in excluded dirs
         node_mods = tmp_path / "node_modules" / "lodash"
         node_mods.mkdir(parents=True)
-        (node_mods / "index.js").write_text('var token = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcde123456";\n')
+        (node_mods / "index.js").write_text(
+            'var token = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcde123456";\n'
+        )
 
         # Create a clean file in the main dir
         (tmp_path / "app.py").write_text('print("hello world")\n')
@@ -464,8 +501,7 @@ class TestSecretScanner:
 
         test_file = tmp_path / "config.yaml"
         test_file.write_text(
-            "database:\n"
-            "  url: postgresql://admin:SuperSecret123@db.example.com/mydb\n"
+            "database:\n  url: postgresql://admin:SuperSecret123@db.example.com/mydb\n"
         )
 
         result = run_secret_scan(str(test_file))
@@ -484,7 +520,8 @@ class TestSecretScanner:
         result = run_secret_scan(str(tmp_path))
         assert result["scan_status"] == "COMPLETED"
         db_findings = [
-            f for f in result["findings"]
+            f
+            for f in result["findings"]
             if "Database" in f["pattern_name"] or "Connection" in f["pattern_name"]
         ]
         assert len(db_findings) >= 1
@@ -495,8 +532,8 @@ class TestSecretScanner:
 
         test_file = tmp_path / "multi_secrets.py"
         test_file.write_text(
-            '-----BEGIN RSA PRIVATE KEY-----\n'  # CRITICAL
-            'password = "mypassword123"\n'        # HIGH (generic)
+            "-----BEGIN RSA PRIVATE KEY-----\n"  # CRITICAL
+            'password = "mypassword123"\n'  # HIGH (generic)
         )
 
         result = run_secret_scan(str(tmp_path))
@@ -509,6 +546,7 @@ class TestSecretScanner:
 # ---------------------------------------------------------------------------
 # Utility Helper Tests
 # ---------------------------------------------------------------------------
+
 
 class TestHelpers:
     """Tests for shared utility functions."""

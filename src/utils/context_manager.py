@@ -34,6 +34,7 @@ _CHARS_PER_TOKEN: float = 4.0
 # Try to import tiktoken for accurate OpenAI-style token counting.
 try:
     import tiktoken as _tiktoken  # type: ignore[import]
+
     _ENCODER = _tiktoken.get_encoding("cl100k_base")
     _USE_TIKTOKEN = True
 except Exception:
@@ -63,10 +64,12 @@ def count_message_tokens(message: dict[str, Any]) -> int:
 # 2. MESSAGE MODEL
 # ──────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class Message:
     """A single conversation turn."""
-    role: str                          # "system" | "user" | "assistant" | "tool"
+
+    role: str  # "system" | "user" | "assistant" | "tool"
     content: str
     timestamp: float = field(default_factory=time.time)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -102,6 +105,7 @@ class Message:
 # ──────────────────────────────────────────────────────────────────
 # 3. ROLLING CONTEXT WINDOW
 # ──────────────────────────────────────────────────────────────────
+
 
 class ContextWindow:
     """
@@ -223,6 +227,7 @@ class ContextWindow:
 # 4. SECURITY CONTEXT  (scan result state across turns)
 # ──────────────────────────────────────────────────────────────────
 
+
 class SecurityContext:
     """
     Holds the results of security scans so subsequent LLM turns can
@@ -235,7 +240,7 @@ class SecurityContext:
     """
 
     def __init__(self) -> None:
-        self._scans: dict[str, dict[str, Any]] = {}   # scan_id → full result
+        self._scans: dict[str, dict[str, Any]] = {}  # scan_id → full result
         self._summaries: dict[str, dict[str, Any]] = {}  # scan_id → summary
         self._metadata: dict[str, Any] = {
             "session_start": time.time(),
@@ -331,9 +336,9 @@ class SecurityContext:
             "critical": s.get("critical", 0),
             "high": s.get("high", 0),
             "digest": (
-                f"SCA {result.get('ecosystem','?')}: "
-                f"{s.get('vulnerable_packages',0)}/{s.get('total_packages_scanned',0)} "
-                f"vulnerable, risk={s.get('risk_rating','?')}"
+                f"SCA {result.get('ecosystem', '?')}: "
+                f"{s.get('vulnerable_packages', 0)}/{s.get('total_packages_scanned', 0)} "
+                f"vulnerable, risk={s.get('risk_rating', '?')}"
             ),
         }
 
@@ -348,9 +353,9 @@ class SecurityContext:
             "critical": s.get("critical", 0),
             "high": s.get("high", 0),
             "digest": (
-                f"Threat Model '{result.get('system','?')}': "
+                f"Threat Model '{result.get('system', '?')}': "
                 f"{s.get('total_threats_identified', result.get('total_threats', 0))} threats, "
-                f"overall={s.get('overall_risk','?')}"
+                f"overall={s.get('overall_risk', '?')}"
             ),
         }
 
@@ -367,7 +372,7 @@ class SecurityContext:
             "overall_posture": result.get("overall_posture", "?"),
             "digest": (
                 f"Compliance: {s.get('total_findings', 0)} findings, "
-                f"coverage={s.get('compliance_coverage','?')}"
+                f"coverage={s.get('compliance_coverage', '?')}"
             ),
         }
 
@@ -396,6 +401,7 @@ class SecurityContext:
 # ──────────────────────────────────────────────────────────────────
 # 5. STATE CHECKPOINT  (persistence)
 # ──────────────────────────────────────────────────────────────────
+
 
 class StateCheckpoint:
     """
@@ -488,6 +494,7 @@ class StateCheckpoint:
 # ──────────────────────────────────────────────────────────────────
 # 6. CONTEXT MANAGER  (top-level orchestrator)
 # ──────────────────────────────────────────────────────────────────
+
 
 class ContextManager:
     """

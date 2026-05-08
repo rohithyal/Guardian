@@ -43,7 +43,7 @@ SIMPLE_ARCH = {
             "from_component": "Product API",
             "to_component": "User Database",
             "protocol": "TCP",
-            "encrypted": False,   # intentional misconfiguration for test
+            "encrypted": False,  # intentional misconfiguration for test
             "authenticated": True,
         },
     ],
@@ -66,6 +66,7 @@ class TestSystemArchitectureInput:
 
     def test_duplicate_component_names_raises(self):
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             SystemArchitectureInput(
                 system_name="Test",
@@ -77,6 +78,7 @@ class TestSystemArchitectureInput:
 
     def test_empty_components_raises(self):
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
             SystemArchitectureInput(system_name="Test", components=[])
 
@@ -111,7 +113,8 @@ class TestGenerateThreatModel:
     def test_pii_component_raises_impact(self):
         report = generate_threat_model(SIMPLE_ARCH)
         pii_threats = [
-            f for f in report["threat_findings"]
+            f
+            for f in report["threat_findings"]
             if f["component"] == "Web Frontend" and f["stride_category"] == "Information Disclosure"
         ]
         assert any(t["impact"] in ("CRITICAL", "HIGH") for t in pii_threats)

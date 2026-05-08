@@ -11,6 +11,7 @@ from src.utils.helpers import normalize_package_name, parse_package_json, parse_
 # Unit: helpers
 # ──────────────────────────────────────────────────────────────────
 
+
 class TestNormalizePackageName:
     def test_lowercase(self):
         assert normalize_package_name("Requests") == "requests"
@@ -103,9 +104,8 @@ class TestRunSCA:
 
     def test_npm_package_json(self):
         import json
-        pkg = json.dumps({
-            "dependencies": {"lodash": "4.17.20", "minimist": "1.2.5"}
-        })
+
+        pkg = json.dumps({"dependencies": {"lodash": "4.17.20", "minimist": "1.2.5"}})
         report = run_sca(f"CONTENT:{pkg}")
         assert report["ecosystem"] == "npm"
         assert report["summary"]["vulnerable_packages"] > 0
@@ -114,5 +114,6 @@ class TestRunSCA:
         from pydantic import ValidationError
 
         from src.server.tools.sca import CheckDependenciesInput
+
         with pytest.raises(ValidationError):
             CheckDependenciesInput(manifest_path="/nonexistent/requirements.txt")

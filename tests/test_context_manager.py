@@ -29,6 +29,7 @@ from src.utils.context_manager import (
 # Token counting
 # ──────────────────────────────────────────────────────────────────
 
+
 class TestTokenCounting:
     def test_empty_string_is_zero(self):
         assert count_tokens("") == 0
@@ -53,6 +54,7 @@ class TestTokenCounting:
 # ──────────────────────────────────────────────────────────────────
 # Message
 # ──────────────────────────────────────────────────────────────────
+
 
 class TestMessage:
     def test_basic_fields(self):
@@ -88,6 +90,7 @@ class TestMessage:
 # ──────────────────────────────────────────────────────────────────
 # ContextWindow
 # ──────────────────────────────────────────────────────────────────
+
 
 class TestContextWindow:
     def test_add_increases_message_count(self):
@@ -153,8 +156,14 @@ class TestContextWindow:
     def test_stats_dict_has_required_keys(self):
         w = ContextWindow(max_tokens=4000)
         s = w.stats()
-        for key in ("total_tokens", "available_tokens", "max_tokens",
-                    "utilisation_pct", "message_count", "evicted_batches"):
+        for key in (
+            "total_tokens",
+            "available_tokens",
+            "max_tokens",
+            "utilisation_pct",
+            "message_count",
+            "evicted_batches",
+        ):
             assert key in s
 
     def test_utilisation_between_0_and_100(self):
@@ -166,6 +175,7 @@ class TestContextWindow:
 # ──────────────────────────────────────────────────────────────────
 # SecurityContext
 # ──────────────────────────────────────────────────────────────────
+
 
 class TestSecurityContext:
     SCA_REPORT = {
@@ -246,7 +256,7 @@ class TestSecurityContext:
 
     def test_risk_ceiling_does_not_decrease(self):
         sc = SecurityContext()
-        sc.store_sca(self.SCA_REPORT)   # CRITICAL
+        sc.store_sca(self.SCA_REPORT)  # CRITICAL
         sc.store_secrets(self.SECRET_REPORT)  # HIGH
         assert sc._metadata["risk_ceiling"] == "CRITICAL"
 
@@ -293,6 +303,7 @@ class TestSecurityContext:
 # ──────────────────────────────────────────────────────────────────
 # StateCheckpoint
 # ──────────────────────────────────────────────────────────────────
+
 
 class TestStateCheckpoint:
     def test_save_and_load_round_trip(self, tmp_path):
@@ -355,6 +366,7 @@ class TestStateCheckpoint:
 # ContextManager (top-level)
 # ──────────────────────────────────────────────────────────────────
 
+
 class TestContextManager:
     def test_add_user_message(self):
         cm = ContextManager(max_tokens=4000)
@@ -376,11 +388,18 @@ class TestContextManager:
 
     def test_security_context_injected_when_scans_stored(self):
         cm = ContextManager(max_tokens=4000)
-        cm.security.store_sca({"summary": {"total_packages_scanned": 5,
-                                            "vulnerable_packages": 1,
-                                            "risk_rating": "HIGH",
-                                            "critical": 0, "high": 1},
-                               "ecosystem": "PyPI"})
+        cm.security.store_sca(
+            {
+                "summary": {
+                    "total_packages_scanned": 5,
+                    "vulnerable_packages": 1,
+                    "risk_rating": "HIGH",
+                    "critical": 0,
+                    "high": 1,
+                },
+                "ecosystem": "PyPI",
+            }
+        )
         cm.add_user("what did the scan find?")
         msgs = cm.get_messages(inject_security_context=True)
         combined = " ".join(m.get("content", "") for m in msgs)
@@ -388,23 +407,33 @@ class TestContextManager:
 
     def test_tool_result_stored_in_security_context(self):
         cm = ContextManager(max_tokens=4000)
-        fake_sca = {"ecosystem": "PyPI",
-                    "summary": {"total_packages_scanned": 3,
-                                "vulnerable_packages": 0,
-                                "risk_rating": "LOW",
-                                "critical": 0, "high": 0}}
+        fake_sca = {
+            "ecosystem": "PyPI",
+            "summary": {
+                "total_packages_scanned": 3,
+                "vulnerable_packages": 0,
+                "risk_rating": "LOW",
+                "critical": 0,
+                "high": 0,
+            },
+        }
         cm.add_tool_result("sca_run1", fake_sca)
         assert "sca_run1" in cm.security.list_scans()
 
     def test_tool_result_compact_in_window(self):
         cm = ContextManager(max_tokens=4000)
         # Large result — window should store summary, not full report
-        large_result = {"ecosystem": "PyPI",
-                        "summary": {"total_packages_scanned": 100,
-                                    "vulnerable_packages": 5,
-                                    "risk_rating": "HIGH",
-                                    "critical": 0, "high": 5},
-                        "verbose_data": ["x"] * 500}
+        large_result = {
+            "ecosystem": "PyPI",
+            "summary": {
+                "total_packages_scanned": 100,
+                "vulnerable_packages": 5,
+                "risk_rating": "HIGH",
+                "critical": 0,
+                "high": 5,
+            },
+            "verbose_data": ["x"] * 500,
+        }
         cm.add_tool_result("sca", large_result)
         # The tool message in the window should be smaller than the full result
         tool_msgs = [m for m in cm.window._messages if m.role == "tool"]
@@ -414,9 +443,15 @@ class TestContextManager:
     def test_stats_has_required_keys(self):
         cm = ContextManager(max_tokens=4000)
         s = cm.stats()
-        for key in ("total_tokens", "available_tokens", "max_tokens",
-                    "utilisation_pct", "message_count", "security_scans_stored",
-                    "risk_ceiling"):
+        for key in (
+            "total_tokens",
+            "available_tokens",
+            "max_tokens",
+            "utilisation_pct",
+            "message_count",
+            "security_scans_stored",
+            "risk_ceiling",
+        ):
             assert key in s
 
     def test_token_report_is_string_with_percentage(self):
@@ -463,10 +498,13 @@ class TestContextManager:
         cm = ContextManager(max_tokens=8000)
         large_result = {
             "ecosystem": "PyPI",
-            "summary": {"total_packages_scanned": 50,
-                        "vulnerable_packages": 2,
-                        "risk_rating": "MEDIUM",
-                        "critical": 0, "high": 0},
+            "summary": {
+                "total_packages_scanned": 50,
+                "vulnerable_packages": 2,
+                "risk_rating": "MEDIUM",
+                "critical": 0,
+                "high": 0,
+            },
             "extra": "x" * 1000,
         }
         cm.add_tool_result("sca_big", large_result)
@@ -498,8 +536,7 @@ class TestContextManager:
         assert "tokens=" in r
 
     def test_list_checkpoints(self, tmp_path):
-        cm = ContextManager(max_tokens=4000, checkpoint_dir=tmp_path,
-                            checkpoint_name="list_test")
+        cm = ContextManager(max_tokens=4000, checkpoint_dir=tmp_path, checkpoint_name="list_test")
         cm.add_user("hi")
         cm.checkpoint()
         assert "list_test" in cm.list_checkpoints()

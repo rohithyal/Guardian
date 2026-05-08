@@ -29,6 +29,7 @@ _OWASP_PATH = _POLICY_DIR / "owasp_top10.yaml"
 # Policy Loader (cached at module level)
 # ──────────────────────────────────────────────────────────────────
 
+
 def _load_yaml(path: Path) -> dict[str, Any]:
     with open(path, encoding="utf-8") as fh:
         return yaml.safe_load(fh)
@@ -180,6 +181,7 @@ class AuditComplianceInput(BaseModel):
 # Core Logic
 # ──────────────────────────────────────────────────────────────────
 
+
 def _map_to_nist(finding: FindingInput) -> list[dict[str, Any]]:
     """Return NIST 800-53 controls applicable to the finding type."""
     nist = _get_nist()
@@ -315,13 +317,11 @@ def run_compliance_audit(
 
         # Add control_id alias to each NIST control (tests use control_id key)
         nist_controls = [
-            {**ctrl, "control_id": ctrl.get("id", "")}
-            for ctrl in nist_fm.get("controls", [])
+            {**ctrl, "control_id": ctrl.get("id", "")} for ctrl in nist_fm.get("controls", [])
         ]
         # Add risk_id alias to each OWASP category (tests use risk_id key)
         owasp_risks = [
-            {**cat, "risk_id": cat.get("id", "")}
-            for cat in owasp_fm.get("categories", [])
+            {**cat, "risk_id": cat.get("id", "")} for cat in owasp_fm.get("categories", [])
         ]
 
         timeline = (
@@ -367,8 +367,7 @@ def run_compliance_audit(
             "owasp_categories_triggered": sorted(owasp_category_ids),
             "unmapped_findings": unmapped,
             "compliance_coverage": (
-                f"{(len(parsed) - len(unmapped)) / len(parsed) * 100:.0f}%"
-                if parsed else "0%"
+                f"{(len(parsed) - len(unmapped)) / len(parsed) * 100:.0f}%" if parsed else "0%"
             ),
         },
         "findings": mapped_findings,
@@ -397,15 +396,9 @@ def _generate_executive_summary(
         f"{sev.get('MEDIUM', 0)} MEDIUM, and {sev.get('LOW', 0)} LOW severities.",
     ]
     if nist_ids:
-        lines.append(
-            f"NIST SP 800-53 controls requiring attention: {', '.join(sorted(nist_ids))}."
-        )
+        lines.append(f"NIST SP 800-53 controls requiring attention: {', '.join(sorted(nist_ids))}.")
     if owasp_ids:
-        lines.append(
-            f"OWASP Top 10 2021 categories implicated: {', '.join(sorted(owasp_ids))}."
-        )
+        lines.append(f"OWASP Top 10 2021 categories implicated: {', '.join(sorted(owasp_ids))}.")
     if sev.get("CRITICAL", 0) > 0:
-        lines.append(
-            "⚠ CRITICAL findings require immediate remediation before deployment."
-        )
+        lines.append("⚠ CRITICAL findings require immediate remediation before deployment.")
     return " ".join(lines)

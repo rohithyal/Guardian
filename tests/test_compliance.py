@@ -7,8 +7,17 @@ import pytest
 from src.server.tools.compliance import run_compliance_audit
 
 SAMPLE_FINDINGS = [
-    {"finding_type": "known_cve", "severity": "HIGH", "description": "CVE in requests", "affected_component": "api"},
-    {"finding_type": "hardcoded_secret", "severity": "CRITICAL", "description": "AWS key in config.py"},
+    {
+        "finding_type": "known_cve",
+        "severity": "HIGH",
+        "description": "CVE in requests",
+        "affected_component": "api",
+    },
+    {
+        "finding_type": "hardcoded_secret",
+        "severity": "CRITICAL",
+        "description": "AWS key in config.py",
+    },
     {"finding_type": "denial_of_service", "severity": "MEDIUM", "description": "No rate limiting"},
 ]
 
@@ -74,5 +83,6 @@ class TestRunComplianceAudit:
         from pydantic import ValidationError
 
         from src.server.tools.compliance import AuditComplianceInput
+
         with pytest.raises(ValidationError):
             AuditComplianceInput(findings=[])

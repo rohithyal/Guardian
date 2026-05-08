@@ -88,6 +88,7 @@ class TestRunSecretScanDirectory:
         from pydantic import ValidationError
 
         from src.server.tools.secret_scanner import ScanSecretsInput
+
         with pytest.raises(ValidationError):
             ScanSecretsInput(target="/nonexistent/path/to/scan")
 

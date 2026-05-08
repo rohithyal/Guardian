@@ -30,17 +30,13 @@ SECRET_PATTERNS: list[tuple[str, re.Pattern[str], str, str]] = [
     ),
     (
         "Generic API Key",
-        re.compile(
-            r"(?i)(api[_\-\s]?key|apikey)['\"\s:=]+([A-Za-z0-9_\-]{20,64})"
-        ),
+        re.compile(r"(?i)(api[_\-\s]?key|apikey)['\"\s:=]+([A-Za-z0-9_\-]{20,64})"),
         "HIGH",
         "Generic API key pattern detected in source.",
     ),
     (
         "Generic Secret / Password",
-        re.compile(
-            r"(?i)(secret|password|passwd|pwd|token)['\"\s:=]+['\"]([^'\"]{8,64})['\"]"
-        ),
+        re.compile(r"(?i)(secret|password|passwd|pwd|token)['\"\s:=]+['\"]([^'\"]{8,64})['\"]"),
         "HIGH",
         "Generic secret or password assignment detected.",
     ),
@@ -138,11 +134,28 @@ SKIP_DIRS: frozenset[str] = frozenset(
 
 SKIP_EXTENSIONS: frozenset[str] = frozenset(
     {
-        ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
-        ".woff", ".woff2", ".ttf", ".eot",
-        ".zip", ".tar", ".gz", ".lock",
-        ".pyc", ".pyo", ".so", ".dylib", ".dll",
-        ".pdf", ".docx", ".xlsx",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".svg",
+        ".ico",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".eot",
+        ".zip",
+        ".tar",
+        ".gz",
+        ".lock",
+        ".pyc",
+        ".pyo",
+        ".so",
+        ".dylib",
+        ".dll",
+        ".pdf",
+        ".docx",
+        ".xlsx",
     }
 )
 
@@ -165,7 +178,9 @@ OSV_MOCK_DB: dict[str, list[dict[str, Any]]] = {
             "affected_versions": "<2.31.0",
             "fixed_version": "2.31.0",
             "published": "2023-05-26",
-            "references": ["https://github.com/psf/requests/security/advisories/GHSA-j8r2-6x86-q33q"],
+            "references": [
+                "https://github.com/psf/requests/security/advisories/GHSA-j8r2-6x86-q33q"
+            ],
         }
     ],
     "urllib3": [
@@ -178,7 +193,9 @@ OSV_MOCK_DB: dict[str, list[dict[str, Any]]] = {
             "affected_versions": "<1.26.17 || >=2.0.0,<2.0.6",
             "fixed_version": "1.26.17 / 2.0.6",
             "published": "2023-10-02",
-            "references": ["https://github.com/urllib3/urllib3/security/advisories/GHSA-g4mx-q9vg-27p4"],
+            "references": [
+                "https://github.com/urllib3/urllib3/security/advisories/GHSA-g4mx-q9vg-27p4"
+            ],
         }
     ],
     "cryptography": [
@@ -191,7 +208,9 @@ OSV_MOCK_DB: dict[str, list[dict[str, Any]]] = {
             "affected_versions": "<41.0.6",
             "fixed_version": "41.0.6",
             "published": "2023-11-29",
-            "references": ["https://github.com/pypa/advisory-database/tree/main/vulns/cryptography"],
+            "references": [
+                "https://github.com/pypa/advisory-database/tree/main/vulns/cryptography"
+            ],
         }
     ],
     "pillow": [
@@ -204,7 +223,9 @@ OSV_MOCK_DB: dict[str, list[dict[str, Any]]] = {
             "affected_versions": "<10.0.1",
             "fixed_version": "10.0.1",
             "published": "2023-11-03",
-            "references": ["https://github.com/python-pillow/Pillow/security/advisories/GHSA-44wm-f244-xhp3"],
+            "references": [
+                "https://github.com/python-pillow/Pillow/security/advisories/GHSA-44wm-f244-xhp3"
+            ],
         }
     ],
     "paramiko": [
@@ -243,7 +264,9 @@ OSV_MOCK_DB: dict[str, list[dict[str, Any]]] = {
             "affected_versions": "<2.3.2 || >=2.2.0,<2.2.5",
             "fixed_version": "2.3.2 / 2.2.5",
             "published": "2023-05-01",
-            "references": ["https://github.com/pallets/flask/security/advisories/GHSA-m2qf-hxjv-5gpq"],
+            "references": [
+                "https://github.com/pallets/flask/security/advisories/GHSA-m2qf-hxjv-5gpq"
+            ],
         }
     ],
     "pyyaml": [
@@ -322,7 +345,9 @@ OSV_MOCK_DB: dict[str, list[dict[str, Any]]] = {
             "affected_versions": "<=8.5.1",
             "fixed_version": "9.0.0",
             "published": "2022-12-22",
-            "references": ["https://github.com/auth0/node-jsonwebtoken/security/advisories/GHSA-hjrf-2m68-5959"],
+            "references": [
+                "https://github.com/auth0/node-jsonwebtoken/security/advisories/GHSA-hjrf-2m68-5959"
+            ],
         }
     ],
     "webpack": [
@@ -402,6 +427,7 @@ def parse_package_json(content: dict[str, Any]) -> list[dict[str, str]]:
 # 4. SEVERITY ENUM
 # ──────────────────────────────────────────────────────────────────
 
+
 class Severity(StrEnum):
     CRITICAL = "CRITICAL"
     HIGH = "HIGH"
@@ -426,6 +452,7 @@ class Severity(StrEnum):
 # ──────────────────────────────────────────────────────────────────
 # 5. VERSION PARSING
 # ──────────────────────────────────────────────────────────────────
+
 
 def parse_version(version_str: str) -> tuple[int, ...]:
     """
@@ -452,17 +479,46 @@ def parse_version(version_str: str) -> tuple[int, ...]:
 
 SCANNABLE_EXTENSIONS: frozenset[str] = frozenset(
     {
-        ".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".go", ".rb",
-        ".php", ".c", ".cpp", ".h", ".cs", ".swift", ".kt", ".rs",
-        ".sh", ".bash", ".zsh", ".ps1", ".yaml", ".yml", ".json",
-        ".toml", ".cfg", ".ini", ".conf", ".env", ".tf", ".hcl",
-        ".xml", ".html", ".htm", ".md", ".txt", ".sql",
+        ".py",
+        ".js",
+        ".ts",
+        ".jsx",
+        ".tsx",
+        ".java",
+        ".go",
+        ".rb",
+        ".php",
+        ".c",
+        ".cpp",
+        ".h",
+        ".cs",
+        ".swift",
+        ".kt",
+        ".rs",
+        ".sh",
+        ".bash",
+        ".zsh",
+        ".ps1",
+        ".yaml",
+        ".yml",
+        ".json",
+        ".toml",
+        ".cfg",
+        ".ini",
+        ".conf",
+        ".env",
+        ".tf",
+        ".hcl",
+        ".xml",
+        ".html",
+        ".htm",
+        ".md",
+        ".txt",
+        ".sql",
     }
 )
 
-SKIP_SCAN_FILENAMES: frozenset[str] = frozenset(
-    {".env.example", ".env.sample", ".env.template"}
-)
+SKIP_SCAN_FILENAMES: frozenset[str] = frozenset({".env.example", ".env.sample", ".env.template"})
 
 
 def is_scannable_file(path: Any) -> bool:

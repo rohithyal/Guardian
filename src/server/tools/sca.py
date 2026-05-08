@@ -30,7 +30,12 @@ from src.utils.helpers import (
 )
 
 logger = logging.getLogger("guardian.sca")
-logger.debug("OSV mode: %s", "LIVE (osv.dev)" if os.getenv("GUARDIAN_LIVE_OSV", "").lower() in ("1", "true", "yes") else "OFFLINE (mock DB)")
+logger.debug(
+    "OSV mode: %s",
+    "LIVE (osv.dev)"
+    if os.getenv("GUARDIAN_LIVE_OSV", "").lower() in ("1", "true", "yes")
+    else "OFFLINE (mock DB)",
+)
 
 # ──────────────────────────────────────────────────────────────────
 # OSV API configuration
@@ -63,6 +68,7 @@ _SEV_TO_CVSS: dict[str, float] = {
 # Input Schema
 # ──────────────────────────────────────────────────────────────────
 
+
 class CheckDependenciesInput(BaseModel):
     manifest_path: str = Field(
         ...,
@@ -83,16 +89,14 @@ class CheckDependenciesInput(BaseModel):
         if not p.exists():
             raise ValueError(f"Manifest file not found: {v}")
         if p.name not in ("requirements.txt", "package.json"):
-            raise ValueError(
-                "Only requirements.txt and package.json are supported. "
-                f"Got: {p.name}"
-            )
+            raise ValueError(f"Only requirements.txt and package.json are supported. Got: {p.name}")
         return v
 
 
 # ──────────────────────────────────────────────────────────────────
 # Core Logic
 # ──────────────────────────────────────────────────────────────────
+
 
 def _parse_osv_response(data: dict[str, Any]) -> list[dict[str, Any]]:
     """Convert a raw OSV API response dict to our internal finding format."""
@@ -112,17 +116,19 @@ def _parse_osv_response(data: dict[str, Any]) -> list[dict[str, Any]]:
                         fixed_version = event["fixed"]
                         break
 
-        results.append({
-            "id": vuln.get("id", ""),
-            "aliases": vuln.get("aliases", []),
-            "summary": (vuln.get("summary") or vuln.get("details", "No description"))[:250],
-            "severity": severity,
-            "cvss_score": cvss_score,
-            "affected_versions": "",
-            "fixed_version": fixed_version,
-            "published": vuln.get("published", ""),
-            "references": [r.get("url", "") for r in vuln.get("references", [])[:3]],
-        })
+        results.append(
+            {
+                "id": vuln.get("id", ""),
+                "aliases": vuln.get("aliases", []),
+                "summary": (vuln.get("summary") or vuln.get("details", "No description"))[:250],
+                "severity": severity,
+                "cvss_score": cvss_score,
+                "affected_versions": "",
+                "fixed_version": fixed_version,
+                "published": vuln.get("published", ""),
+                "references": [r.get("url", "") for r in vuln.get("references", [])[:3]],
+            }
+        )
     return results
 
 
@@ -140,9 +146,7 @@ def _query_osv(package_name: str, ecosystem: str = "PyPI") -> list[dict[str, Any
         return OSV_MOCK_DB.get(norm, [])
 
     try:
-        payload = json.dumps(
-            {"package": {"name": norm, "ecosystem": ecosystem}}
-        ).encode()
+        payload = json.dumps({"package": {"name": norm, "ecosystem": ecosystem}}).encode()
         req = urllib.request.Request(
             _OSV_API_URL,
             data=payload,
@@ -151,12 +155,12 @@ def _query_osv(package_name: str, ecosystem: str = "PyPI") -> list[dict[str, Any
         )
         with urllib.request.urlopen(req, timeout=_OSV_TIMEOUT) as resp:
             data: dict[str, Any] = json.loads(resp.read().decode())
-        logger.debug("OSV live hit for %s/%s: %d vulns", ecosystem, norm, len(data.get("vulns", [])))
+        logger.debug(
+            "OSV live hit for %s/%s: %d vulns", ecosystem, norm, len(data.get("vulns", []))
+        )
         return _parse_osv_response(data)
     except Exception as exc:
-        logger.warning(
-            "OSV API unavailable for %s (%s); falling back to mock DB.", norm, exc
-        )
+        logger.warning("OSV API unavailable for %s (%s); falling back to mock DB.", norm, exc)
         return OSV_MOCK_DB.get(norm, [])
 
 
@@ -165,7 +169,7 @@ def _load_packages(manifest_path: str) -> tuple[str, list[dict[str, str]]]:
     Load and parse a manifest file. Returns (ecosystem, packages).
     """
     if manifest_path.startswith("CONTENT:"):
-        raw = manifest_path[len("CONTENT:"):]
+        raw = manifest_path[len("CONTENT:") :]
         # Guess ecosystem from content shape
         if raw.strip().startswith("{"):
             data = json.loads(raw)
@@ -204,9 +208,7 @@ def run_sca(manifest_path: str) -> dict[str, Any]:
         if findings:
             total_vulns += len(findings)
             # Sort by CVSS score descending
-            sorted_findings = sorted(
-                findings, key=lambda x: x.get("cvss_score", 0), reverse=True
-            )
+            sorted_findings = sorted(findings, key=lambda x: x.get("cvss_score", 0), reverse=True)
             vulnerable.append(
                 {
                     "package": name,
@@ -219,16 +221,11 @@ def run_sca(manifest_path: str) -> dict[str, Any]:
         else:
             clean.append(name)
 
-
     # Sort vulnerable packages by highest severity
     vulnerable.sort(key=lambda x: severity_rank(x["highest_severity"]), reverse=True)
 
-    critical_count = sum(
-        1 for v in vulnerable if v["highest_severity"] == "CRITICAL"
-    )
-    high_count = sum(
-        1 for v in vulnerable if v["highest_severity"] == "HIGH"
-    )
+    critical_count = sum(1 for v in vulnerable if v["highest_severity"] == "CRITICAL")
+    high_count = sum(1 for v in vulnerable if v["highest_severity"] == "HIGH")
 
     report: dict[str, Any] = {
         "scan_type": "Software Composition Analysis (SCA)",
@@ -242,9 +239,12 @@ def run_sca(manifest_path: str) -> dict[str, Any]:
             "critical": critical_count,
             "high": high_count,
             "risk_rating": (
-                "CRITICAL" if critical_count > 0
-                else "HIGH" if high_count > 0
-                else "MEDIUM" if vulnerable
+                "CRITICAL"
+                if critical_count > 0
+                else "HIGH"
+                if high_count > 0
+                else "MEDIUM"
+                if vulnerable
                 else "LOW"
             ),
         },
@@ -271,12 +271,14 @@ def run_sca(manifest_path: str) -> dict[str, Any]:
 # Compatibility wrapper — flattened response schema
 # ──────────────────────────────────────────────────────────────────
 
+
 def _load_packages_from_json(
     data: dict[str, Any],
     include_dev: bool,
 ) -> list[dict[str, str]]:
     """Parse package.json, optionally skipping devDependencies."""
     import re as _re
+
     packages: list[dict[str, str]] = []
     sections = ["dependencies"]
     if include_dev:

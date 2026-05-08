@@ -29,6 +29,7 @@ MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024  # 1 MB
 # Shannon Entropy
 # ──────────────────────────────────────────────────────────────────
 
+
 def _calculate_entropy(s: str) -> float:
     """Return the Shannon entropy (bits) of *s*. Empty string → 0.0."""
     if not s:
@@ -37,15 +38,13 @@ def _calculate_entropy(s: str) -> float:
     for ch in s:
         freq[ch] = freq.get(ch, 0) + 1
     length = len(s)
-    return -sum(
-        (count / length) * math.log2(count / length)
-        for count in freq.values()
-    )
+    return -sum((count / length) * math.log2(count / length) for count in freq.values())
 
 
 # ──────────────────────────────────────────────────────────────────
 # Input Schema
 # ──────────────────────────────────────────────────────────────────
+
 
 class ScanSecretsInput(BaseModel):
     target: str = Field(
@@ -89,6 +88,7 @@ class ScanSecretsInput(BaseModel):
 # File Iterator
 # ──────────────────────────────────────────────────────────────────
 
+
 def _iter_files(
     root: Path,
     include_exts: list[str] | None,
@@ -102,9 +102,7 @@ def _iter_files(
 
     for dirpath, dirnames, filenames in os.walk(root):
         # Prune skip dirs in-place (avoids descending into them)
-        dirnames[:] = [
-            d for d in dirnames if d not in SKIP_DIRS and not d.startswith(".")
-        ]
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and not d.startswith(".")]
 
         for fname in filenames:
             fpath = Path(dirpath) / fname
@@ -114,9 +112,7 @@ def _iter_files(
                 continue
             if include_exts and fpath.suffix.lower() not in include_exts:
                 continue
-            if exclude_patterns and any(
-                fpath.match(pat) for pat in exclude_patterns
-            ):
+            if exclude_patterns and any(fpath.match(pat) for pat in exclude_patterns):
                 continue
 
             # Size guard
@@ -134,6 +130,7 @@ def _iter_files(
 # ──────────────────────────────────────────────────────────────────
 # Scanner
 # ──────────────────────────────────────────────────────────────────
+
 
 def _scan_content(
     content: str,
@@ -164,7 +161,7 @@ def _scan_content(
             findings.append(
                 {
                     "file": source_label,
-                    "file_path": source_label,   # convenience alias
+                    "file_path": source_label,  # convenience alias
                     "line": line_no,
                     "pattern_name": label,
                     "severity": severity,
@@ -204,7 +201,7 @@ def run_secret_scan(
     files_with_findings: set[str] = set()
 
     if target.startswith("CONTENT:"):
-        content = target[len("CONTENT:"):]
+        content = target[len("CONTENT:") :]
         findings = _scan_content(content, "<inline>", max_findings_per_file)
         all_findings.extend(findings)
         files_scanned = 1
@@ -242,16 +239,19 @@ def run_secret_scan(
     pattern_types = list({f["pattern_name"] for f in all_findings})
 
     risk_rating = (
-        "CRITICAL" if sev_counts["CRITICAL"] > 0
-        else "HIGH" if sev_counts["HIGH"] > 0
-        else "MEDIUM" if all_findings
+        "CRITICAL"
+        if sev_counts["CRITICAL"] > 0
+        else "HIGH"
+        if sev_counts["HIGH"] > 0
+        else "MEDIUM"
+        if all_findings
         else "CLEAN"
     )
 
     report: dict[str, Any] = {
         "scan_type": "Secret & Credential Scanner",
         "scan_status": "COMPLETED",
-        "files_scanned": files_scanned,         # top-level convenience field
+        "files_scanned": files_scanned,  # top-level convenience field
         "target": target if not target.startswith("CONTENT:") else "<inline content>",
         "summary": {
             "files_scanned": files_scanned,
@@ -285,8 +285,7 @@ def run_secret_scan(
 
 # Map pattern label → stable SARIF rule ID
 _SARIF_RULE_IDS: dict[str, str] = {
-    label: f"GUARD-S{str(i + 1).zfill(3)}"
-    for i, (label, *_) in enumerate(SECRET_PATTERNS)
+    label: f"GUARD-S{str(i + 1).zfill(3)}" for i, (label, *_) in enumerate(SECRET_PATTERNS)
 }
 
 _SARIF_LEVEL: dict[str, str] = {
@@ -318,63 +317,72 @@ def to_sarif(report: dict[str, Any]) -> dict[str, Any]:
         rule_id = _SARIF_RULE_IDS[label]
         if rule_id not in seen_rules:
             seen_rules.add(rule_id)
-            rules.append({
-                "id": rule_id,
-                "name": label.replace(" ", ""),
-                "shortDescription": {"text": label},
-                "fullDescription": {"text": description},
-                "defaultConfiguration": {"level": _SARIF_LEVEL.get(severity, "warning")},
-                "properties": {
-                    "security-severity": _SEV_SCORE.get(severity, "5.0"),
-                    "tags": ["security", "secret-detection"],
-                },
-            })
+            rules.append(
+                {
+                    "id": rule_id,
+                    "name": label.replace(" ", ""),
+                    "shortDescription": {"text": label},
+                    "fullDescription": {"text": description},
+                    "defaultConfiguration": {"level": _SARIF_LEVEL.get(severity, "warning")},
+                    "properties": {
+                        "security-severity": _SEV_SCORE.get(severity, "5.0"),
+                        "tags": ["security", "secret-detection"],
+                    },
+                }
+            )
 
     results: list[dict[str, Any]] = []
     for finding in report.get("findings", []):
         rule_id = _SARIF_RULE_IDS.get(finding["pattern_name"], "GUARD-S000")
         uri = finding.get("file_path", finding.get("file", "<inline>"))
-        results.append({
-            "ruleId": rule_id,
-            "level": _SARIF_LEVEL.get(finding["severity"], "warning"),
-            "message": {
-                "text": (
-                    f"{finding['description']} — redacted match: {finding['redacted_match']}"
-                )
-            },
-            "locations": [{
-                "physicalLocation": {
-                    "artifactLocation": {"uri": uri, "uriBaseId": "%SRCROOT%"},
-                    "region": {"startLine": finding.get("line", 1)},
-                }
-            }],
-            "properties": {"severity": finding["severity"]},
-        })
+        results.append(
+            {
+                "ruleId": rule_id,
+                "level": _SARIF_LEVEL.get(finding["severity"], "warning"),
+                "message": {
+                    "text": (
+                        f"{finding['description']} — redacted match: {finding['redacted_match']}"
+                    )
+                },
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {"uri": uri, "uriBaseId": "%SRCROOT%"},
+                            "region": {"startLine": finding.get("line", 1)},
+                        }
+                    }
+                ],
+                "properties": {"severity": finding["severity"]},
+            }
+        )
 
     return {
         "version": "2.1.0",
         "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
-        "runs": [{
-            "tool": {
-                "driver": {
-                    "name": "Guardian Secret Scanner",
-                    "version": "1.0.0",
-                    "informationUri": "https://github.com/your-username/guardian-ssdlc",
-                    "rules": rules,
-                }
-            },
-            "results": results,
-            "properties": {
-                "guardian_risk_rating": report.get("summary", {}).get("risk_rating", "UNKNOWN"),
-                "files_scanned": report.get("files_scanned", 0),
-            },
-        }],
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "Guardian Secret Scanner",
+                        "version": "1.0.0",
+                        "informationUri": "https://github.com/your-username/guardian-ssdlc",
+                        "rules": rules,
+                    }
+                },
+                "results": results,
+                "properties": {
+                    "guardian_risk_rating": report.get("summary", {}).get("risk_rating", "UNKNOWN"),
+                    "files_scanned": report.get("files_scanned", 0),
+                },
+            }
+        ],
     }
 
 
 # ──────────────────────────────────────────────────────────────────
 # Git History Scanner
 # ──────────────────────────────────────────────────────────────────
+
 
 def scan_git_history(
     repo_path: str,
@@ -395,7 +403,10 @@ def scan_git_history(
 
     p = Path(repo_path)
     if not p.exists() or not p.is_dir():
-        return {"scan_status": "FAILED", "error": f"Path does not exist or is not a directory: {repo_path}"}
+        return {
+            "scan_status": "FAILED",
+            "error": f"Path does not exist or is not a directory: {repo_path}",
+        }
 
     # Verify it is a git repo
     try:
@@ -415,11 +426,13 @@ def scan_git_history(
     try:
         result = subprocess.run(
             [
-                "git", "log", "-p",
+                "git",
+                "log",
+                "-p",
                 branch,
                 f"--max-count={max_commits}",
                 "--no-merges",
-                "--diff-filter=AM",   # only added / modified hunks
+                "--diff-filter=AM",  # only added / modified hunks
                 "--format=COMMIT:%H%nAUTHOR:%an <%ae>%nDATE:%ci%nMESSAGE:%s",
             ],
             cwd=str(p),
@@ -428,7 +441,10 @@ def scan_git_history(
             timeout=120,
         )
     except subprocess.TimeoutExpired:
-        return {"scan_status": "FAILED", "error": "git log timed out after 120 s — try reducing max_commits"}
+        return {
+            "scan_status": "FAILED",
+            "error": "git log timed out after 120 s — try reducing max_commits",
+        }
 
     if result.returncode != 0:
         return {"scan_status": "FAILED", "error": result.stderr.strip()}
@@ -470,23 +486,23 @@ def scan_git_history(
                 for match in pattern.finditer(added_line):
                     full_match = match.group(0)
                     visible = (
-                        full_match[:6] + "***" + full_match[-3:]
-                        if len(full_match) > 12
-                        else "***"
+                        full_match[:6] + "***" + full_match[-3:] if len(full_match) > 12 else "***"
                     )
-                    findings.append({
-                        "commit": current_commit[:12],
-                        "author": current_author,
-                        "date": current_date,
-                        "message": current_message[:80],
-                        "file": current_file,
-                        "line": line_offset,
-                        "pattern_name": label,
-                        "severity": severity,
-                        "description": description,
-                        "redacted_match": visible,
-                        "line_preview": added_line.strip()[:120],
-                    })
+                    findings.append(
+                        {
+                            "commit": current_commit[:12],
+                            "author": current_author,
+                            "date": current_date,
+                            "message": current_message[:80],
+                            "file": current_file,
+                            "line": line_offset,
+                            "pattern_name": label,
+                            "severity": severity,
+                            "description": description,
+                            "redacted_match": visible,
+                            "line_preview": added_line.strip()[:120],
+                        }
+                    )
         elif not raw_line.startswith("-"):
             # context lines (no +/-) still advance line counter
             line_offset += 1
@@ -508,9 +524,12 @@ def scan_git_history(
         sev_counts[f["severity"]] = sev_counts.get(f["severity"], 0) + 1
 
     risk_rating = (
-        "CRITICAL" if sev_counts["CRITICAL"] > 0
-        else "HIGH" if sev_counts["HIGH"] > 0
-        else "MEDIUM" if unique_findings
+        "CRITICAL"
+        if sev_counts["CRITICAL"] > 0
+        else "HIGH"
+        if sev_counts["HIGH"] > 0
+        else "MEDIUM"
+        if unique_findings
         else "CLEAN"
     )
 
@@ -518,7 +537,9 @@ def scan_git_history(
 
     logger.info(
         "Git history scan complete: %d findings across %d commits, risk=%s",
-        len(unique_findings), commits_with_findings, risk_rating,
+        len(unique_findings),
+        commits_with_findings,
+        risk_rating,
     )
 
     return {
@@ -538,7 +559,9 @@ def scan_git_history(
             "Rotate ALL credentials found — assume they are compromised.",
             "Add pre-commit hooks (detect-secrets, gitleaks) to prevent future commits.",
             "Consider the repository compromised if it was ever public while these commits existed.",
-        ] if unique_findings else ["No secrets found in git history."],
+        ]
+        if unique_findings
+        else ["No secrets found in git history."],
     }
 
 

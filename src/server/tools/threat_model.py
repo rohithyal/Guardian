@@ -23,6 +23,7 @@ logger = logging.getLogger("guardian.threat_model")
 # Input Schema
 # ──────────────────────────────────────────────────────────────────
 
+
 class ComponentModel(BaseModel):
     name: str = Field(..., description="Component display name, e.g. 'API Gateway'.")
     type: str = Field(
@@ -110,8 +111,11 @@ STRIDE_CATALOGUE: dict[str, dict[str, Any]] = {
         "description": "An attacker modifies data in transit or at rest without authorisation.",
         "affected_property": "Integrity",
         "triggers": lambda c, df_list: (
-            any(not df.encrypted for df in df_list
-                if df.from_component == c.name or df.to_component == c.name)
+            any(
+                not df.encrypted
+                for df in df_list
+                if df.from_component == c.name or df.to_component == c.name
+            )
             or c.type in ("database", "queue", "cache")
         ),
         "base_likelihood": "MEDIUM",
@@ -126,10 +130,7 @@ STRIDE_CATALOGUE: dict[str, dict[str, Any]] = {
         "code": "R",
         "description": "An attacker performs an action and denies having done so.",
         "affected_property": "Non-repudiation",
-        "triggers": lambda c, _df: (
-            c.type in ("api", "web_app", "auth_service")
-            or c.handles_pii
-        ),
+        "triggers": lambda c, _df: c.type in ("api", "web_app", "auth_service") or c.handles_pii,
         "base_likelihood": "MEDIUM",
         "mitigations": [
             "Implement tamper-evident, centralised audit logging.",
@@ -160,8 +161,7 @@ STRIDE_CATALOGUE: dict[str, dict[str, Any]] = {
         "description": "An attacker disrupts the availability of a component or the system.",
         "affected_property": "Availability",
         "triggers": lambda c, _df: (
-            c.exposes_internet
-            or c.type in ("api", "web_app", "cdn", "queue")
+            c.exposes_internet or c.type in ("api", "web_app", "cdn", "queue")
         ),
         "base_likelihood": "MEDIUM",
         "mitigations": [
@@ -235,6 +235,7 @@ def _risk_level(likelihood: str, impact: str) -> str:
 # Core Logic
 # ──────────────────────────────────────────────────────────────────
 
+
 def generate_threat_model(architecture: dict[str, Any]) -> dict[str, Any]:
     """
     Main entry-point for the threat modelling engine.
@@ -302,9 +303,12 @@ def generate_threat_model(architecture: dict[str, Any]) -> dict[str, Any]:
             "medium": sum(1 for f in findings if f["risk_level"] == "MEDIUM"),
             "low": sum(1 for f in findings if f["risk_level"] == "LOW"),
             "overall_risk": (
-                "CRITICAL" if critical_count > 0
-                else "HIGH" if high_count > 0
-                else "MEDIUM" if findings
+                "CRITICAL"
+                if critical_count > 0
+                else "HIGH"
+                if high_count > 0
+                else "MEDIUM"
+                if findings
                 else "LOW"
             ),
         },
@@ -442,9 +446,7 @@ def run_threat_model(architecture_json: str) -> dict[str, Any]:
     # ── trust boundary string ─────────────────────────────────────
     trust_boundaries = raw.get("trust_boundaries", [])
     trust_boundary_str: str = (
-        " / ".join(trust_boundaries)
-        if trust_boundaries
-        else raw.get("trust_boundary", "")
+        " / ".join(trust_boundaries) if trust_boundaries else raw.get("trust_boundary", "")
     )
 
     return {

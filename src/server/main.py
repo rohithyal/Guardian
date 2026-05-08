@@ -69,6 +69,7 @@ mcp = FastMCP(
 # Tool 1: Software Composition Analysis
 # ──────────────────────────────────────────────────────────────────
 
+
 @mcp.tool(
     name="check_dependencies",
     description=(
@@ -103,6 +104,7 @@ def check_dependencies(manifest_path: str) -> dict[str, Any]:
 # ──────────────────────────────────────────────────────────────────
 # Tool 2: Threat Modelling Engine
 # ──────────────────────────────────────────────────────────────────
+
 
 @mcp.tool(
     name="generate_threat_model",
@@ -149,6 +151,7 @@ def generate_threat_model_tool(architecture: str) -> dict[str, Any]:
 # ──────────────────────────────────────────────────────────────────
 # Tool 3: Compliance Guardrails
 # ──────────────────────────────────────────────────────────────────
+
 
 @mcp.tool(
     name="audit_compliance",
@@ -200,6 +203,7 @@ def audit_compliance(findings: str, frameworks: str = "NIST_800_53,OWASP_TOP10")
 # ──────────────────────────────────────────────────────────────────
 # Tool 4: Secret Scanner
 # ──────────────────────────────────────────────────────────────────
+
 
 @mcp.tool(
     name="scan_secrets",
@@ -260,6 +264,7 @@ def scan_secrets(
 # Tool 5: Git History Secret Scanner
 # ──────────────────────────────────────────────────────────────────
 
+
 @mcp.tool(
     name="scan_git_history",
     description=(
@@ -296,11 +301,14 @@ def scan_git_history_tool(
 # Entry-point
 # ──────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     logger.info(
         "[bold green]Guardian S-SDLC Orchestrator[/bold green] starting on stdio transport."
     )
-    logger.info("Registered tools: check_dependencies, generate_threat_model, audit_compliance, scan_secrets, scan_git_history")
+    logger.info(
+        "Registered tools: check_dependencies, generate_threat_model, audit_compliance, scan_secrets, scan_git_history"
+    )
     mcp.run(transport="stdio")
 
 
