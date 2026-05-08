@@ -5,7 +5,6 @@
 #   • Non-root user execution
 #   • No secrets baked into layers
 #   • Explicit COPY to minimise attack surface
-#   • Read-only filesystem hints via labels
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Stage 1: Builder ────────────────────────────────────────────────────────
@@ -19,20 +18,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 
-# Create an isolated venv — cleaner than --prefix and works correctly
-# with compiled extensions at any path.
+# Isolated venv — copied wholesale into the production image
 RUN python -m venv /venv
 ENV PATH="/venv/bin:$PATH"
 
-# Copy only what pip needs to resolve and build the package.
-# pyproject.toml first so dependency-only layers can be cached separately.
+# Copy manifest first so this layer is cached until deps change
 COPY pyproject.toml ./
-COPY src/ ./src/
 
-# Install hatchling (build backend) first so pip can use it without
-# spawning a separate build-isolation subprocess, then install the package.
-RUN pip install --upgrade pip hatchling \
-    && pip install --no-cache-dir --no-build-isolation .
+# Read runtime dependencies directly from pyproject.toml using Python 3.11's
+# built-in tomllib and install them.  We never build a wheel for the local
+# package — src/ is added to PYTHONPATH in the production stage instead,
+# which avoids all hatchling/build-isolation complexity inside Docker.
+RUN pip install --upgrade pip \
+    && python3 -c '\
+import tomllib, subprocess, sys; \
+deps = tomllib.load(open("pyproject.toml", "rb"))["project"]["dependencies"]; \
+subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir"] + deps)'
 
 
 # ── Stage 2: Production Runtime ─────────────────────────────────────────────
@@ -49,16 +50,19 @@ LABEL org.opencontainers.image.title="Guardian S-SDLC Orchestrator" \
 RUN groupadd --gid 1001 guardian \
     && useradd --uid 1001 --gid guardian --shell /bin/bash --create-home guardian
 
-# Copy the venv from builder stage
+# Bring in the pre-built venv from the builder stage
 COPY --from=builder /venv /venv
 ENV PATH="/venv/bin:$PATH"
 
 WORKDIR /app
 
-# Copy application source (explicitly list to avoid copying .env, secrets, etc.)
+# Copy application source (explicitly listed — no .env, no secrets)
 COPY src/        ./src/
 COPY data/       ./data/
 COPY pyproject.toml ./
+
+# src/ is not installed as a package; make it importable via PYTHONPATH
+ENV PYTHONPATH="/app"
 
 # Fix ownership — all files belong to the non-root user
 RUN chown -R guardian:guardian /app
@@ -78,7 +82,7 @@ ENV PYTHONUNBUFFERED=1 \
     MAX_TOKENS=8192
 
 # Default: run the interactive AI consultant
-# Override CMD at runtime: docker run guardian python -m src.server.main
+# Override at runtime: docker run guardian python -m src.server.main
 CMD ["python", "-m", "src.client.consultant"]
 
 
@@ -87,9 +91,12 @@ FROM production AS development
 
 USER root
 
-# Install dev dependencies into the same venv
+# Install dev-only extras directly from pyproject.toml
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir ".[dev]"  # PATH already includes /venv/bin
+RUN python3 -c '\
+import tomllib, subprocess, sys; \
+deps = tomllib.load(open("pyproject.toml", "rb"))["project"]["optional-dependencies"]["dev"]; \
+subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir"] + deps)'
 
 # Install additional dev tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
