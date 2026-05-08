@@ -25,29 +25,31 @@ jobs:
       - name: Run SCA + Secret scan
         id: scan
         run: |
-          python -c "
-import json, os, sys
-from src.server.tools.sca import run_sca
-from src.server.tools.secret_scanner import run_secret_scan
+          python - <<'PYEOF'
+          import json, os, sys
+          from src.server.tools.sca import run_sca
+          from src.server.tools.secret_scanner import run_secret_scan
 
-# SCA
-sca = run_sca('CONTENT:requests==2.28.0\npyyaml==5.3\nflask==2.2.0\n')
-with open('weekly_sca.json', 'w') as f: json.dump(sca, f, indent=2)
+          sca = run_sca('CONTENT:requests==2.28.0\npyyaml==5.3\nflask==2.2.0\n')
+          with open('weekly_sca.json', 'w') as f:
+              json.dump(sca, f, indent=2)
 
-# Secret scan
-secrets = run_secret_scan(target='src/')
-with open('weekly_secrets.json', 'w') as f: json.dump(secrets, f, indent=2)
+          secrets = run_secret_scan(target='src/')
+          with open('weekly_secrets.json', 'w') as f:
+              json.dump(secrets, f, indent=2)
 
-crit_sca = sca['summary'].get('critical', 0)
-crit_sec = secrets['summary']['severity_breakdown'].get('CRITICAL', 0)
+          crit_sca = sca['summary'].get('critical', 0)
+          crit_sec = secrets['summary']['severity_breakdown'].get('CRITICAL', 0)
+          risk_rating = sca['summary']['risk_rating']
 
-with open(os.environ.get('GITHUB_ENV', '/dev/null'), 'a') as env:
-    env.write(f'SCA_CRITICAL={crit_sca}\n')
-    env.write(f'SECRET_CRITICAL={crit_sec}\n')
-    env.write(f'SCA_RISK={sca[\"summary\"][\"risk_rating\"]}\n')
+          gh_env = os.environ.get('GITHUB_ENV', '/dev/null')
+          with open(gh_env, 'a') as env:
+              env.write(f'SCA_CRITICAL={crit_sca}\n')
+              env.write(f'SECRET_CRITICAL={crit_sec}\n')
+              env.write(f'SCA_RISK={risk_rating}\n')
 
-print(f'SCA risk={sca[\"summary\"][\"risk_rating\"]} | Secrets critical={crit_sec}')
-"
+          print(f'SCA risk={risk_rating} | Secrets critical={crit_sec}')
+          PYEOF
 
       - name: Open GitHub Issue on CRITICAL findings
         if: env.SCA_CRITICAL != '0' || env.SECRET_CRITICAL != '0'
