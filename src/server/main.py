@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import json
 import logging
-import sys
 from typing import Any
 
 from fastmcp import FastMCP
@@ -185,7 +184,7 @@ def audit_compliance(findings: str, frameworks: str = "NIST_800_53,OWASP_TOP10")
         validated = AuditComplianceInput(findings=findings_list, frameworks=fw_list)
         return run_compliance_audit(
             [f.model_dump() for f in validated.findings],
-            [fw for fw in validated.frameworks],
+            list(validated.frameworks),
         )
     except (json.JSONDecodeError, TypeError) as exc:
         logger.error("JSON parsing error: %s", exc)

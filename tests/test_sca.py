@@ -3,9 +3,9 @@ Tests for Software Composition Analysis (SCA) tool.
 """
 
 import pytest
-from src.server.tools.sca import run_sca
-from src.utils.helpers import parse_requirements_txt, parse_package_json, normalize_package_name
 
+from src.server.tools.sca import run_sca
+from src.utils.helpers import normalize_package_name, parse_package_json, parse_requirements_txt
 
 # ──────────────────────────────────────────────────────────────────
 # Unit: helpers
@@ -112,6 +112,7 @@ class TestRunSCA:
 
     def test_invalid_path_raises(self):
         from pydantic import ValidationError
+
         from src.server.tools.sca import CheckDependenciesInput
         with pytest.raises(ValidationError):
             CheckDependenciesInput(manifest_path="/nonexistent/requirements.txt")

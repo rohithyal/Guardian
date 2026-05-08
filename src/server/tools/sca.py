@@ -23,7 +23,6 @@ from pydantic import BaseModel, Field, field_validator
 
 from src.utils.helpers import (
     OSV_MOCK_DB,
-    Severity,
     normalize_package_name,
     parse_package_json,
     parse_requirements_txt,

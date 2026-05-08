@@ -3,8 +3,8 @@ Tests for the Secret Scanner tool.
 """
 
 import pytest
-from src.server.tools.secret_scanner import run_secret_scan
 
+from src.server.tools.secret_scanner import run_secret_scan
 
 # ──────────────────────────────────────────────────────────────────
 # Test payloads (synthetic — never real credentials)
@@ -86,6 +86,7 @@ class TestRunSecretScanInline:
 class TestRunSecretScanDirectory:
     def test_invalid_path_raises(self):
         from pydantic import ValidationError
+
         from src.server.tools.secret_scanner import ScanSecretsInput
         with pytest.raises(ValidationError):
             ScanSecretsInput(target="/nonexistent/path/to/scan")

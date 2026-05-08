@@ -31,17 +31,15 @@ if _env_path.exists():
 else:
     load_dotenv()  # fallback: search CWD
 
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_mcp_adapters.client import MultiServerMCPClient
-from langgraph.prebuilt import create_react_agent
-from rich.console import Console
-from rich.markdown import Markdown
-from rich.panel import Panel
-from rich.prompt import Prompt
-from rich.rule import Rule
-from rich.syntax import Syntax
-from rich.text import Text
-from rich.theme import Theme
+from langchain_google_genai import ChatGoogleGenerativeAI  # noqa: E402
+from langchain_mcp_adapters.client import MultiServerMCPClient  # noqa: E402
+from langgraph.prebuilt import create_react_agent  # noqa: E402
+from rich.console import Console  # noqa: E402
+from rich.markdown import Markdown  # noqa: E402
+from rich.panel import Panel  # noqa: E402
+from rich.prompt import Prompt  # noqa: E402
+from rich.rule import Rule  # noqa: E402
+from rich.theme import Theme  # noqa: E402
 
 # ──────────────────────────────────────────────────────────────────
 # Rich Console
@@ -238,13 +236,14 @@ async def stream_agent_response(agent: Any, user_input: str, history: list) -> l
         # Extract and render the final AI message
         final_content = ""
         for msg in reversed(messages):
-            if hasattr(msg, "content") and isinstance(msg.content, str) and msg.content.strip():
-                if hasattr(msg, "type") and msg.type == "ai":
-                    final_content = msg.content
-                    break
-                elif not hasattr(msg, "type"):
-                    final_content = msg.content
-                    break
+            if (
+                hasattr(msg, "content")
+                and isinstance(msg.content, str)
+                and msg.content.strip()
+                and (not hasattr(msg, "type") or msg.type == "ai")
+            ):
+                final_content = msg.content
+                break
 
         if final_content:
             console.print(

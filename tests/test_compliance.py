@@ -3,8 +3,8 @@ Tests for the Compliance Guardrails audit tool.
 """
 
 import pytest
-from src.server.tools.compliance import run_compliance_audit
 
+from src.server.tools.compliance import run_compliance_audit
 
 SAMPLE_FINDINGS = [
     {"finding_type": "known_cve", "severity": "HIGH", "description": "CVE in requests", "affected_component": "api"},
@@ -72,6 +72,7 @@ class TestRunComplianceAudit:
 
     def test_empty_findings_raises(self):
         from pydantic import ValidationError
+
         from src.server.tools.compliance import AuditComplianceInput
         with pytest.raises(ValidationError):
             AuditComplianceInput(findings=[])

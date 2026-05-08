@@ -8,13 +8,11 @@ Covers: TokenCounter, Message, ContextWindow, SecurityContext,
 from __future__ import annotations
 
 import json
-import tempfile
-import time
+import sys
 from pathlib import Path
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils.context_manager import (
@@ -23,10 +21,9 @@ from src.utils.context_manager import (
     Message,
     SecurityContext,
     StateCheckpoint,
-    count_tokens,
     count_message_tokens,
+    count_tokens,
 )
-
 
 # ──────────────────────────────────────────────────────────────────
 # Token counting
@@ -474,7 +471,7 @@ class TestContextManager:
         }
         cm.add_tool_result("sca_big", large_result)
         before = cm.window.token_count
-        saved = cm.compress_tool_results()
+        cm.compress_tool_results()
         # Either tokens were saved, or there was nothing to compress further
         assert cm.window.token_count <= before
 
@@ -482,7 +479,6 @@ class TestContextManager:
         cm = ContextManager(max_tokens=500)
         for i in range(30):
             cm.add_user(f"message {i} with a fair amount of content to fill the budget")
-        initial_tokens = cm.window.token_count
         freed = cm.trim_to_budget(target_pct=0.5)
         assert freed >= 0
         assert cm.window.token_count <= cm.window.max_tokens

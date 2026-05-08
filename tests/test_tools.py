@@ -10,14 +10,9 @@ Run with:
 from __future__ import annotations
 
 import json
-import os
-import tempfile
+import sys
 from pathlib import Path
 
-import pytest
-
-# Ensure project root is on path
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
@@ -406,7 +401,6 @@ class TestSecretScanner:
         """Should detect RSA private key begin header."""
         from src.server.tools.secret_scanner import run_secret_scan
 
-        test_file = tmp_path / "secrets.pem"
         # Add .pem with text to make scannable
         test_file_py = tmp_path / "key_loader.py"
         test_file_py.write_text(

@@ -8,7 +8,7 @@ and helper functions used across server tools.
 from __future__ import annotations
 
 import re
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 # ──────────────────────────────────────────────────────────────────
@@ -402,7 +402,7 @@ def parse_package_json(content: dict[str, Any]) -> list[dict[str, str]]:
 # 4. SEVERITY ENUM
 # ──────────────────────────────────────────────────────────────────
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     CRITICAL = "CRITICAL"
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
@@ -410,7 +410,7 @@ class Severity(str, Enum):
     INFO = "INFO"
 
     @classmethod
-    def from_cvss(cls, score: float) -> "Severity":
+    def from_cvss(cls, score: float) -> Severity:
         """Map a CVSS numeric score to a Severity bucket."""
         if score >= 9.0:
             return cls.CRITICAL

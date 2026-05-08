@@ -16,12 +16,11 @@ from __future__ import annotations
 import json
 import logging
 import math
-import os
-import re
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 logger = logging.getLogger("guardian.context_manager")
 
@@ -86,7 +85,7 @@ class Message:
         }
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "Message":
+    def from_dict(cls, d: dict[str, Any]) -> Message:
         m = cls(role=d["role"], content=d["content"], timestamp=d.get("timestamp", 0.0))
         m.metadata = d.get("metadata", {})
         m.token_count = d.get("token_count", count_tokens(d["content"]) + 4)

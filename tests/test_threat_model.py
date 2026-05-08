@@ -3,8 +3,8 @@ Tests for the STRIDE Threat Modelling Engine.
 """
 
 import pytest
-from src.server.tools.threat_model import generate_threat_model, SystemArchitectureInput
 
+from src.server.tools.threat_model import SystemArchitectureInput, generate_threat_model
 
 SIMPLE_ARCH = {
     "system_name": "E-Commerce Platform",

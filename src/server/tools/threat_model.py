@@ -219,9 +219,9 @@ def _calculate_impact(component: ComponentModel, stride_key: str) -> str:
 
 
 def _risk_level(likelihood: str, impact: str) -> str:
-    l = LIKELIHOOD_SCORE.get(likelihood, 2)
+    likelihood_score = LIKELIHOOD_SCORE.get(likelihood, 2)
     i = IMPACT_SCORE.get(impact, 2)
-    score = l * i
+    score = likelihood_score * i
     if score >= 9:
         return "CRITICAL"
     if score >= 6:
