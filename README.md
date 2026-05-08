@@ -1,5 +1,7 @@
 # Guardian S-SDLC
 
+![CI](https://github.com/rohithyal/Guardian/actions/workflows/ci.yml/badge.svg)
+
 An AI-powered security automation tool that catches vulnerabilities, hardcoded secrets, compliance gaps, and architectural threats — before they reach production.
 
 ---
@@ -16,19 +18,19 @@ It's not a linter. It's not a SAST scanner that produces a CSV you have to manua
 
 ## What it can do
 
-**Dependency Scanning (SCA)**  
-Point it at a `requirements.txt` or `package.json`. It queries the vulnerability database, surfaces CVEs with CVSS scores, tells you which packages to upgrade first, and ranks them by risk.
+**Dependency Scanning (SCA)**
+Point it at a `requirements.txt` or `package.json`. It queries the vulnerability database, surfaces CVEs with CVSS scores, tells you which packages to upgrade first, and ranks them by risk. Supports live queries to `osv.dev` (opt-in) with automatic fallback to the offline mock.
 
-**Threat Modeling**  
+**Threat Modeling**
 Give it a JSON description of your system — components, data flows, which services touch the internet, which ones handle PII. It applies the STRIDE framework (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege) to every component and produces a prioritized risk inventory with DREAD scoring and concrete mitigations.
 
-**Compliance Mapping**  
+**Compliance Mapping**
 Feed it a list of security findings. It maps each one to the specific NIST SP 800-53 Rev 5 controls and OWASP Top 10 2021 categories that are triggered. The output tells you not just "you have a SQL injection" but "this triggers A03:2021 and SI-10, your remediation timeline is 4 hours."
 
-**Secret Scanning**  
+**Secret Scanning**
 Point it at a directory. It walks your source tree, applies 16 regex patterns (AWS keys, GitHub tokens, Google API keys, Stripe keys, database connection strings, JWT tokens, PEM private keys, and more), runs Shannon entropy analysis to cut false positives, and tells you exactly which file and line number the problem is on — with the credential redacted so the report itself doesn't become a liability. Output can be returned as **SARIF 2.1.0** for direct integration with GitHub Code Scanning and IDE extensions.
 
-**Git History Scanning**  
+**Git History Scanning**
 Secrets removed from HEAD are still in your git history — and if the repo was ever public, they're already compromised. This tool runs `git log -p` through the same 16-pattern engine, reports findings by commit hash, author, and date, and tells you exactly when each credential was introduced. Essential before any public release or security audit.
 
 ---
@@ -62,8 +64,8 @@ The token reduction system (`context_manager.py`) keeps the LLM context efficien
 
 ```bash
 # Clone and set up
-git clone https://github.com/your-username/guardian-ssdlc
-cd guardian-ssdlc
+git clone https://github.com/rohithyal/Guardian
+cd Guardian
 python -m venv .venv
 .venv\Scripts\activate        # Windows
 source .venv/bin/activate     # Mac/Linux
@@ -113,6 +115,29 @@ docker build -t guardian-ssdlc .
 docker run -it -e GOOGLE_API_KEY=your_key guardian-ssdlc
 ```
 
+The image uses a multi-stage build (builder → production). Runtime dependencies are installed into an isolated virtual environment in the builder stage and copied across — the final image contains no build toolchain. The container runs as a non-root user (`uid=1001`).
+
+Override the default command to run just the MCP server:
+
+```bash
+docker run -it -e GOOGLE_API_KEY=your_key guardian-ssdlc python -m src.server.main
+```
+
+---
+
+## CI/CD
+
+Every push and pull request runs a four-job GitHub Actions pipeline:
+
+| Job | What it checks |
+|---|---|
+| **Lint & Type Check** | `ruff check`, `ruff format --check`, `mypy` |
+| **Tests** | `pytest` on Python 3.11 and 3.12 with coverage upload to Codecov |
+| **Guardian Self-Scan** | Runs `scan_secrets` against `src/` — CI fails on any CRITICAL finding |
+| **Docker Build** | Builds the production image, verifies non-root user, imports the MCP server |
+
+A weekly scheduled workflow runs a full SCA + secret scan and opens a GitHub Issue automatically if CRITICAL findings are detected.
+
 ---
 
 ## Running tests
@@ -158,6 +183,11 @@ data/
 scripts/
 └── build_graph.py               Generates PROJECT_GRAPH.json + GRAPH_SUMMARY.md
 
+.github/
+└── workflows/
+    ├── ci.yml                   Push/PR pipeline (lint, test, self-scan, Docker)
+    └── scheduled_audit.yml      Weekly SCA + secret scan with auto issue creation
+
 tests/                           137 tests, zero external dependencies
 ```
 
@@ -186,6 +216,8 @@ Copy `.env.example` to `.env` and set these variables:
 **Comment lines are skipped.** A line like `# AWS_KEY = "AKIA..."  # example only` won't be flagged. The scanner checks whether a match sits on a comment line and skips it, which significantly reduces false positives in documentation and example files.
 
 **The LLM never sees your raw source code.** The secret scanner reads your files locally and returns a structured report. The LLM only sees the report. Your source code stays on your machine.
+
+**The container runs as non-root.** The production Docker image creates a dedicated `guardian` user (uid 1001) and switches to it before the application starts. The CI pipeline verifies this with `id -u` on every build.
 
 ---
 
@@ -219,7 +251,10 @@ Copy `.env.example` to `.env` and set these variables:
 | Compliance Data | YAML (NIST 800-53, OWASP Top 10) |
 | Vulnerability Data | OSV mock (offline default) + osv.dev live API (opt-in) |
 | Testing | pytest, 137 tests |
+| Lint / Format | Ruff |
+| CI/CD | GitHub Actions (lint, test, self-scan, Docker) |
 | Build | Hatchling |
+| Container | Docker multi-stage, non-root, venv isolation |
 | Python | 3.11+ |
 
 ---
