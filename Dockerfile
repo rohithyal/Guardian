@@ -29,9 +29,10 @@ ENV PATH="/venv/bin:$PATH"
 COPY pyproject.toml ./
 COPY src/ ./src/
 
-# Install runtime dependencies into the venv.
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir .
+# Install hatchling (build backend) first so pip can use it without
+# spawning a separate build-isolation subprocess, then install the package.
+RUN pip install --upgrade pip hatchling \
+    && pip install --no-cache-dir --no-build-isolation .
 
 
 # ── Stage 2: Production Runtime ─────────────────────────────────────────────
