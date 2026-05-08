@@ -54,15 +54,7 @@ logger = logging.getLogger("guardian.server")
 # ──────────────────────────────────────────────────────────────────
 # FastMCP Application
 # ──────────────────────────────────────────────────────────────────
-mcp = FastMCP(
-    name="Guardian S-SDLC Orchestrator",
-    version="1.0.0",
-    description=(
-        "A Secure Software Development Life Cycle (S-SDLC) automation server. "
-        "Provides automated SCA, threat modelling, compliance auditing, and "
-        "secret detection tools for shift-left security engineering."
-    ),
-)
+mcp = FastMCP(name="Guardian S-SDLC Orchestrator")
 
 
 # ──────────────────────────────────────────────────────────────────
