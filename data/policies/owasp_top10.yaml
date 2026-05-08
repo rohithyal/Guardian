@@ -1,0 +1,113 @@
+# OWASP Top 10 2021 — Vulnerability Category Mappings
+# Maps finding types to relevant OWASP categories with remediation guidance
+
+categories:
+  A01_broken_access_control:
+    id: "A01:2021"
+    name: "Broken Access Control"
+    description: "Restrictions on authenticated users are not properly enforced."
+    triggers: ["elevation_of_privilege", "information_disclosure", "missing_auth"]
+    remediation:
+      - "Implement deny-by-default access control policies."
+      - "Log access control failures and alert on repeated failures."
+      - "Invalidate stateful session identifiers after logout."
+      - "Enforce record ownership rather than accepting user-supplied IDs."
+
+  A02_cryptographic_failures:
+    id: "A02:2021"
+    name: "Cryptographic Failures"
+    description: "Failures related to cryptography that lead to sensitive data exposure."
+    triggers: ["hardcoded_secret", "api_key_exposure", "weak_crypto", "information_disclosure"]
+    remediation:
+      - "Classify data processed and apply controls per data classification."
+      - "Do not store sensitive data unnecessarily; discard it as soon as possible."
+      - "Encrypt all data at rest and in transit with strong, up-to-date algorithms."
+      - "Disable caching for responses containing sensitive data."
+
+  A03_injection:
+    id: "A03:2021"
+    name: "Injection"
+    description: "User-supplied data is not validated, filtered, or sanitised."
+    triggers: ["sql_injection", "command_injection", "tampering"]
+    remediation:
+      - "Use a safe API that avoids using the interpreter entirely."
+      - "Use positive server-side input validation."
+      - "Escape special characters using the specific escape syntax for that interpreter."
+      - "Use LIMIT and other SQL controls to prevent mass disclosure of records."
+
+  A04_insecure_design:
+    id: "A04:2021"
+    name: "Insecure Design"
+    description: "Missing or ineffective control design; risks not mitigated by design."
+    triggers: ["spoofing", "tampering", "missing_threat_model"]
+    remediation:
+      - "Establish and use a secure development lifecycle with AppSec professionals."
+      - "Use threat modeling for critical authentication, access control, and business logic."
+      - "Integrate security language into user stories."
+      - "Write unit and integration tests to validate threat model controls."
+
+  A05_security_misconfiguration:
+    id: "A05:2021"
+    name: "Security Misconfiguration"
+    description: "Improperly configured permissions, unnecessary features, or default credentials."
+    triggers: ["hardcoded_secret", "outdated_dependency", "elevation_of_privilege"]
+    remediation:
+      - "Implement a repeatable hardening process for all environments."
+      - "Remove or do not install unused features and frameworks."
+      - "Review and update configurations as part of the patch management process."
+      - "Segment application architecture to provide effective isolation."
+
+  A06_vulnerable_components:
+    id: "A06:2021"
+    name: "Vulnerable and Outdated Components"
+    description: "Using components with known vulnerabilities that undermine application defences."
+    triggers: ["known_cve", "outdated_dependency"]
+    remediation:
+      - "Remove unused dependencies, unnecessary features, components, and files."
+      - "Continuously inventory versions of client-side and server-side components."
+      - "Monitor CVE and NVD for vulnerabilities in the components you use."
+      - "Only obtain components from official sources over secure links."
+
+  A07_identification_failures:
+    id: "A07:2021"
+    name: "Identification and Authentication Failures"
+    description: "Weaknesses in authentication that allow attackers to compromise credentials or sessions."
+    triggers: ["spoofing", "hardcoded_secret", "api_key_exposure"]
+    remediation:
+      - "Implement multi-factor authentication to prevent credential stuffing attacks."
+      - "Do not ship or deploy with any default credentials."
+      - "Implement weak-password checks against a list of known bad passwords."
+      - "Use a server-side session manager that generates a new random session ID after login."
+
+  A08_software_integrity_failures:
+    id: "A08:2021"
+    name: "Software and Data Integrity Failures"
+    description: "Code and infrastructure not protected against integrity violations."
+    triggers: ["tampering", "known_cve", "outdated_dependency"]
+    remediation:
+      - "Use digital signatures or similar mechanisms to verify that software is from expected sources."
+      - "Ensure libraries and dependencies are consuming trusted repositories."
+      - "Ensure there is a review process for code and configuration changes."
+      - "Ensure your CI/CD pipeline has proper segregation, configuration, and access control."
+
+  A09_logging_failures:
+    id: "A09:2021"
+    name: "Security Logging and Monitoring Failures"
+    description: "Insufficient logging and monitoring to detect and respond to breaches."
+    triggers: ["repudiation", "information_disclosure"]
+    remediation:
+      - "Ensure all login, access control, and server-side input validation failures are logged."
+      - "Ensure logs are generated in a format that log management solutions can easily consume."
+      - "Establish effective monitoring and alerting so suspicious activities are detected."
+      - "Establish or adopt an incident response and recovery plan."
+
+  A10_ssrf:
+    id: "A10:2021"
+    name: "Server-Side Request Forgery (SSRF)"
+    description: "Fetching a remote resource without validating the user-supplied URL."
+    triggers: ["information_disclosure", "tampering"]
+    remediation:
+      - "Sanitise and validate all client-supplied input data."
+      - "Enforce URL schema, port, and destination with a positive allow list."
+      - "Disable HTTP redirections."
+      - "Do not deploy other security-relevant services on front-end systems."

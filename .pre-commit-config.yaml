@@ -1,0 +1,77 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Guardian S-SDLC — Pre-commit Hook Configuration
+#
+# Install:  pip install pre-commit && pre-commit install
+# Run now:  pre-commit run --all-files
+#
+# These hooks run locally before every git commit, catching issues before
+# they ever reach the CI pipeline — the purest expression of Shift-Left.
+# ─────────────────────────────────────────────────────────────────────────────
+
+default_language_version:
+  python: python3.11
+
+repos:
+
+  # ── Standard file hygiene ──────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: detect-private-key            # catches PEM blocks
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  # ── Secret detection (Yelp detect-secrets) ────────────────────
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: '(\.env\.example|tests/|data/)'
+
+  # ── Ruff — linter + formatter ─────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  # ── Guardian secret self-scan (custom local hook) ─────────────
+  - repo: local
+    hooks:
+      - id: guardian-secret-scan
+        name: Guardian — Secret Scanner
+        entry: python -c "
+import sys
+from src.server.tools.secret_scanner import run_secret_scan
+
+# Scan staged Python/JS/config files
+report = run_secret_scan(target='src/')
+crit = report['summary']['severity_breakdown'].get('CRITICAL', 0)
+high = report['summary']['severity_breakdown'].get('HIGH', 0)
+
+if crit > 0:
+    print(f'Guardian: BLOCKED — {crit} CRITICAL secret(s) detected in src/')
+    for f in report['findings'][:5]:
+        print(f'  {f[\"file\"]}:{f[\"line\"]} [{f[\"pattern_name\"]}] {f[\"redacted_match\"]}')
+    sys.exit(1)
+elif high > 0:
+    print(f'Guardian WARNING: {high} HIGH severity finding(s). Review before pushing.')
+else:
+    print(f'Guardian: Secret scan CLEAN ({report[\"summary\"][\"files_scanned\"]} files)')
+"
+        language: python
+        pass_filenames: false
+        types: [python]
+        additional_dependencies: [pydantic>=2.5.0]

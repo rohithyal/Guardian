@@ -1,0 +1,801 @@
+{
+  "generated_at": "2026-05-08T01:30:31.593908+00:00",
+  "project": "guardian-ssdlc",
+  "version": "1.0.0",
+  "test_count": 137,
+  "modules": {
+    "src/__init__.py": {
+      "docstring": "",
+      "internal_deps": [],
+      "external_imports": [],
+      "functions": [],
+      "classes": {},
+      "constants": [],
+      "lines": 1
+    },
+    "src/client/__init__.py": {
+      "docstring": "",
+      "internal_deps": [],
+      "external_imports": [],
+      "functions": [],
+      "classes": {},
+      "constants": [],
+      "lines": 1
+    },
+    "src/client/consultant.py": {
+      "docstring": "guardian-ssdlc \u00b7 client/consultant.py",
+      "internal_deps": [],
+      "external_imports": [
+        "__future__",
+        "argparse",
+        "asyncio",
+        "dotenv",
+        "langchain_google_genai",
+        "langchain_mcp_adapters",
+        "langgraph",
+        "os",
+        "pathlib",
+        "rich",
+        "sys",
+        "textwrap",
+        "typing"
+      ],
+      "functions": [
+        "print_banner",
+        "print_examples",
+        "print_tools",
+        "stream_agent_response",
+        "run_consultant",
+        "main"
+      ],
+      "classes": {},
+      "constants": [
+        "GUARDIAN_THEME",
+        "SYSTEM_PROMPT",
+        "BANNER",
+        "SUBTITLE"
+      ],
+      "lines": 394
+    },
+    "src/server/__init__.py": {
+      "docstring": "",
+      "internal_deps": [],
+      "external_imports": [],
+      "functions": [],
+      "classes": {},
+      "constants": [],
+      "lines": 1
+    },
+    "src/server/main.py": {
+      "docstring": "guardian-ssdlc \u00b7 server/main.py",
+      "internal_deps": [
+        "src.server.tools.compliance",
+        "src.server.tools.sca",
+        "src.server.tools.secret_scanner",
+        "src.server.tools.threat_model"
+      ],
+      "external_imports": [
+        "__future__",
+        "fastmcp",
+        "json",
+        "logging",
+        "pydantic",
+        "rich",
+        "sys",
+        "typing"
+      ],
+      "functions": [
+        "check_dependencies",
+        "generate_threat_model_tool",
+        "audit_compliance",
+        "scan_secrets",
+        "scan_git_history_tool",
+        "main"
+      ],
+      "classes": {},
+      "constants": [],
+      "lines": 310
+    },
+    "src/server/tools/__init__.py": {
+      "docstring": "",
+      "internal_deps": [],
+      "external_imports": [],
+      "functions": [],
+      "classes": {},
+      "constants": [],
+      "lines": 1
+    },
+    "src/server/tools/compliance.py": {
+      "docstring": "guardian-ssdlc \u00b7 tools/compliance.py",
+      "internal_deps": [],
+      "external_imports": [
+        "__future__",
+        "json",
+        "logging",
+        "pathlib",
+        "pydantic",
+        "typing",
+        "yaml"
+      ],
+      "functions": [
+        "_load_yaml",
+        "_get_nist",
+        "_get_owasp",
+        "_normalize_finding_dict",
+        "_compliance_status",
+        "_map_to_nist",
+        "_map_to_owasp",
+        "run_compliance_audit",
+        "_generate_executive_summary"
+      ],
+      "classes": {
+        "FindingInput": [
+          "normalise_finding",
+          "normalise_severity"
+        ],
+        "AuditComplianceInput": [
+          "normalise_frameworks"
+        ]
+      },
+      "constants": [
+        "_POLICY_DIR",
+        "_NIST_PATH",
+        "_OWASP_PATH",
+        "_NIST_DATA",
+        "_OWASP_DATA",
+        "SUPPORTED_FINDING_TYPES",
+        "FINDING_TYPE_ALIASES",
+        "REMEDIATION_TIMELINES"
+      ],
+      "lines": 412
+    },
+    "src/server/tools/sca.py": {
+      "docstring": "guardian-ssdlc \u00b7 tools/sca.py",
+      "internal_deps": [
+        "src.utils.helpers"
+      ],
+      "external_imports": [
+        "__future__",
+        "json",
+        "logging",
+        "os",
+        "pathlib",
+        "pydantic",
+        "re",
+        "typing",
+        "urllib"
+      ],
+      "functions": [
+        "_parse_osv_response",
+        "_query_osv",
+        "_load_packages",
+        "run_sca",
+        "_load_packages_from_json",
+        "run_dependency_check"
+      ],
+      "classes": {
+        "CheckDependenciesInput": [
+          "validate_manifest"
+        ]
+      },
+      "constants": [
+        "_OSV_API_URL",
+        "_OSV_TIMEOUT",
+        "_USE_LIVE_OSV",
+        "_OSV_SEV_MAP",
+        "_SEV_TO_CVSS"
+      ],
+      "lines": 374
+    },
+    "src/server/tools/secret_scanner.py": {
+      "docstring": "guardian-ssdlc \u00b7 tools/secret_scanner.py",
+      "internal_deps": [
+        "src.utils.helpers"
+      ],
+      "external_imports": [
+        "__future__",
+        "logging",
+        "math",
+        "os",
+        "pathlib",
+        "pydantic",
+        "subprocess",
+        "typing"
+      ],
+      "functions": [
+        "_calculate_entropy",
+        "_iter_files",
+        "_scan_content",
+        "run_secret_scan",
+        "to_sarif",
+        "scan_git_history",
+        "_build_recommendations"
+      ],
+      "classes": {
+        "ScanSecretsInput": [
+          "validate_target"
+        ]
+      },
+      "constants": [
+        "MAX_FILE_SIZE_BYTES",
+        "_SARIF_RULE_IDS",
+        "_SARIF_LEVEL",
+        "_SEV_SCORE"
+      ],
+      "lines": 564
+    },
+    "src/server/tools/threat_model.py": {
+      "docstring": "guardian-ssdlc \u00b7 tools/threat_model.py",
+      "internal_deps": [],
+      "external_imports": [
+        "__future__",
+        "json",
+        "logging",
+        "pydantic",
+        "typing"
+      ],
+      "functions": [
+        "_calculate_impact",
+        "_risk_level",
+        "generate_threat_model",
+        "run_threat_model"
+      ],
+      "classes": {
+        "ComponentModel": [],
+        "DataFlowModel": [],
+        "SystemArchitectureInput": [
+          "validate_components"
+        ]
+      },
+      "constants": [
+        "STRIDE_CATALOGUE",
+        "LIKELIHOOD_SCORE",
+        "IMPACT_SCORE",
+        "_DREAD_MAP",
+        "_COMPLIANCE_NOTES"
+      ],
+      "lines": 459
+    },
+    "src/utils/__init__.py": {
+      "docstring": "",
+      "internal_deps": [],
+      "external_imports": [],
+      "functions": [],
+      "classes": {},
+      "constants": [],
+      "lines": 1
+    },
+    "src/utils/context_manager.py": {
+      "docstring": "guardian-ssdlc \u00b7 utils/context_manager.py",
+      "internal_deps": [],
+      "external_imports": [
+        "__future__",
+        "dataclasses",
+        "json",
+        "logging",
+        "math",
+        "os",
+        "pathlib",
+        "re",
+        "tiktoken",
+        "time",
+        "typing"
+      ],
+      "functions": [
+        "count_tokens",
+        "count_message_tokens"
+      ],
+      "classes": {
+        "Message": [
+          "to_dict",
+          "from_dict",
+          "summarise"
+        ],
+        "ContextWindow": [
+          "add",
+          "get_messages",
+          "token_count",
+          "available_tokens",
+          "utilisation_pct",
+          "clear",
+          "stats",
+          "_pin_system",
+          "_enforce_budget",
+          "_summarise_batch"
+        ],
+        "SecurityContext": [
+          "store_sca",
+          "store_threat_model",
+          "store_compliance",
+          "store_secrets",
+          "get_full",
+          "get_summary",
+          "get_digest",
+          "get_prompt_context",
+          "list_scans",
+          "clear",
+          "_summarise_sca",
+          "_summarise_threat",
+          "_summarise_compliance",
+          "_summarise_secrets",
+          "_update_risk"
+        ],
+        "StateCheckpoint": [
+          "save",
+          "load",
+          "list_checkpoints",
+          "delete"
+        ],
+        "ContextManager": [
+          "add_user",
+          "add_assistant",
+          "add_system",
+          "add_tool_result",
+          "get_messages",
+          "build_prompt",
+          "stats",
+          "token_report",
+          "checkpoint",
+          "restore",
+          "list_checkpoints",
+          "compress_tool_results",
+          "trim_to_budget"
+        ]
+      },
+      "constants": [
+        "_CHARS_PER_TOKEN"
+      ],
+      "lines": 671
+    },
+    "src/utils/helpers.py": {
+      "docstring": "guardian-ssdlc \u00b7 utils/helpers.py",
+      "internal_deps": [],
+      "external_imports": [
+        "__future__",
+        "enum",
+        "pathlib",
+        "re",
+        "typing"
+      ],
+      "functions": [
+        "severity_rank",
+        "normalize_package_name",
+        "parse_requirements_txt",
+        "parse_package_json",
+        "parse_version",
+        "is_scannable_file"
+      ],
+      "classes": {
+        "Severity": [
+          "from_cvss"
+        ]
+      },
+      "constants": [
+        "SECRET_PATTERNS",
+        "SKIP_DIRS",
+        "SKIP_EXTENSIONS",
+        "OSV_MOCK_DB",
+        "SEVERITY_ORDER",
+        "SCANNABLE_EXTENSIONS",
+        "SKIP_SCAN_FILENAMES"
+      ],
+      "lines": 497
+    }
+  },
+  "tests": {
+    "tests/test_compliance.py": {
+      "docstring": "Tests for the Compliance Guardrails audit tool.",
+      "internal_deps": [
+        "src.server.tools.compliance"
+      ],
+      "external_imports": [
+        "pydantic",
+        "pytest"
+      ],
+      "functions": [],
+      "classes": {
+        "TestRunComplianceAudit": [
+          "test_report_structure",
+          "test_nist_controls_triggered",
+          "test_owasp_categories_triggered",
+          "test_hardcoded_secret_triggers_ia5",
+          "test_severity_breakdown",
+          "test_compliance_coverage_percentage",
+          "test_nist_only_framework",
+          "test_executive_summary_contains_severity_counts",
+          "test_empty_findings_raises"
+        ]
+      },
+      "constants": [
+        "SAMPLE_FINDINGS",
+        "SINGLE_FINDING"
+      ],
+      "lines": 78
+    },
+    "tests/test_context_manager.py": {
+      "docstring": "Tests for the Token Reduction & Context Management System.",
+      "internal_deps": [
+        "src.utils.context_manager"
+      ],
+      "external_imports": [
+        "__future__",
+        "json",
+        "pathlib",
+        "pytest",
+        "sys",
+        "tempfile",
+        "time"
+      ],
+      "functions": [],
+      "classes": {
+        "TestTokenCounting": [
+          "test_empty_string_is_zero",
+          "test_single_word_is_positive",
+          "test_longer_text_has_more_tokens",
+          "test_message_overhead",
+          "test_empty_content_still_has_overhead"
+        ],
+        "TestMessage": [
+          "test_basic_fields",
+          "test_token_count_auto_computed",
+          "test_to_dict_round_trip",
+          "test_summarise_truncates",
+          "test_summarise_short_content_no_ellipsis"
+        ],
+        "TestContextWindow": [
+          "test_add_increases_message_count",
+          "test_system_prompt_is_pinned",
+          "test_token_count_increases_with_messages",
+          "test_available_tokens_decreases",
+          "test_get_messages_returns_list_of_dicts",
+          "test_eviction_occurs_when_over_budget",
+          "test_eviction_summary_injected_in_get_messages",
+          "test_clear_removes_non_system_messages",
+          "test_clear_all_removes_system_too",
+          "test_stats_dict_has_required_keys",
+          "test_utilisation_between_0_and_100"
+        ],
+        "TestSecurityContext": [
+          "test_store_and_retrieve_sca",
+          "test_store_and_retrieve_threat",
+          "test_store_secrets",
+          "test_store_compliance",
+          "test_risk_ceiling_escalates",
+          "test_risk_ceiling_does_not_decrease",
+          "test_get_digest_contains_scan_ids",
+          "test_get_prompt_context_is_string",
+          "test_list_scans",
+          "test_clear_specific_scan",
+          "test_clear_all",
+          "test_get_missing_scan_returns_none"
+        ],
+        "TestStateCheckpoint": [
+          "test_save_and_load_round_trip",
+          "test_load_nonexistent_raises",
+          "test_list_checkpoints",
+          "test_delete_checkpoint",
+          "test_delete_nonexistent_returns_false",
+          "test_saved_checkpoint_has_correct_schema"
+        ],
+        "TestContextManager": [
+          "test_add_user_message",
+          "test_add_assistant_message",
+          "test_get_messages_returns_list",
+          "test_security_context_injected_when_scans_stored",
+          "test_tool_result_stored_in_security_context",
+          "test_tool_result_compact_in_window",
+          "test_stats_has_required_keys",
+          "test_token_report_is_string_with_percentage",
+          "test_build_prompt_adds_message_and_returns_list",
+          "test_checkpoint_and_restore",
+          "test_restore_no_checkpoint_returns_false",
+          "test_compress_tool_results_reduces_tokens",
+          "test_trim_to_budget",
+          "test_iter_yields_message_dicts",
+          "test_repr_contains_useful_info",
+          "test_list_checkpoints"
+        ]
+      },
+      "constants": [],
+      "lines": 510
+    },
+    "tests/test_sca.py": {
+      "docstring": "Tests for Software Composition Analysis (SCA) tool.",
+      "internal_deps": [
+        "src.server.tools.sca",
+        "src.utils.helpers"
+      ],
+      "external_imports": [
+        "json",
+        "pydantic",
+        "pytest"
+      ],
+      "functions": [],
+      "classes": {
+        "TestNormalizePackageName": [
+          "test_lowercase",
+          "test_strip_version",
+          "test_strip_extras",
+          "test_strip_whitespace"
+        ],
+        "TestParseRequirementsTxt": [
+          "test_pinned_packages",
+          "test_skips_comments",
+          "test_skips_flags",
+          "test_bare_package"
+        ],
+        "TestParsePackageJson": [
+          "test_extracts_dependencies",
+          "test_empty_package_json"
+        ],
+        "TestRunSCA": [
+          "test_detects_known_vulnerabilities",
+          "test_clean_manifest_has_zero_vulns",
+          "test_report_structure",
+          "test_pyyaml_critical",
+          "test_npm_package_json",
+          "test_invalid_path_raises"
+        ]
+      },
+      "constants": [
+        "VULN_REQUIREMENTS",
+        "CLEAN_REQUIREMENTS"
+      ],
+      "lines": 118
+    },
+    "tests/test_secret_scanner.py": {
+      "docstring": "Tests for the Secret Scanner tool.",
+      "internal_deps": [
+        "src.server.tools.secret_scanner"
+      ],
+      "external_imports": [
+        "pydantic",
+        "pytest"
+      ],
+      "functions": [],
+      "classes": {
+        "TestRunSecretScanInline": [
+          "test_clean_code_returns_no_findings",
+          "test_detects_aws_access_key",
+          "test_detects_private_key",
+          "test_detects_jwt",
+          "test_findings_are_redacted",
+          "test_critical_rating_for_aws",
+          "test_report_structure",
+          "test_recommendations_present_for_findings"
+        ],
+        "TestRunSecretScanDirectory": [
+          "test_invalid_path_raises",
+          "test_scan_current_dir"
+        ]
+      },
+      "constants": [
+        "CLEAN_CODE",
+        "DIRTY_CODE_DB",
+        "DIRTY_CODE_AWS",
+        "DIRTY_CODE_PRIVATE_KEY",
+        "DIRTY_CODE_JWT"
+      ],
+      "lines": 101
+    },
+    "tests/test_threat_model.py": {
+      "docstring": "Tests for the STRIDE Threat Modelling Engine.",
+      "internal_deps": [
+        "src.server.tools.threat_model"
+      ],
+      "external_imports": [
+        "pydantic",
+        "pytest"
+      ],
+      "functions": [],
+      "classes": {
+        "TestSystemArchitectureInput": [
+          "test_valid_architecture",
+          "test_duplicate_component_names_raises",
+          "test_empty_components_raises"
+        ],
+        "TestGenerateThreatModel": [
+          "test_report_structure",
+          "test_detects_threats_for_internet_component",
+          "test_unencrypted_flow_warning",
+          "test_stride_categories_covered",
+          "test_pii_component_raises_impact",
+          "test_minimal_architecture",
+          "test_overall_risk_not_low_for_internet_pii"
+        ]
+      },
+      "constants": [
+        "SIMPLE_ARCH",
+        "MINIMAL_ARCH"
+      ],
+      "lines": 127
+    },
+    "tests/test_tools.py": {
+      "docstring": "Guardian-SSDLC Test Suite",
+      "internal_deps": [
+        "src.server.tools.compliance",
+        "src.server.tools.sca",
+        "src.server.tools.secret_scanner",
+        "src.server.tools.threat_model",
+        "src.utils.helpers"
+      ],
+      "external_imports": [
+        "__future__",
+        "json",
+        "os",
+        "pathlib",
+        "pytest",
+        "sys",
+        "tempfile"
+      ],
+      "functions": [],
+      "classes": {
+        "TestSCADependencyCheck": [
+          "test_scan_vulnerable_requirements_txt",
+          "test_scan_clean_requirements_txt",
+          "test_scan_package_json",
+          "test_scan_includes_dev_deps",
+          "test_scan_missing_file",
+          "test_scan_unsupported_format",
+          "test_unpinned_dependencies_flagged",
+          "test_cvss_score_present"
+        ],
+        "TestThreatModel": [
+          "test_generates_stride_threats",
+          "test_payment_handler_elevates_risk",
+          "test_pci_compliance_note_included",
+          "test_multi_component_architecture",
+          "test_invalid_json_returns_error",
+          "test_dread_scores_in_valid_range",
+          "test_threats_sorted_by_dread"
+        ],
+        "TestComplianceAudit": [
+          "test_maps_vulnerable_dependency_to_nist",
+          "test_maps_hardcoded_credentials_to_owasp",
+          "test_critical_severity_is_non_compliant",
+          "test_multiple_findings_aggregated",
+          "test_overall_posture_critical_when_critical_finding",
+          "test_remediation_timeline_included_by_default",
+          "test_nist_only_framework"
+        ],
+        "TestSecretScanner": [
+          "test_detects_aws_access_key",
+          "test_detects_github_pat",
+          "test_detects_private_key_header",
+          "test_skips_commented_lines",
+          "test_skips_excluded_directories",
+          "test_nonexistent_path_returns_error",
+          "test_scan_single_file",
+          "test_db_connection_string_detected",
+          "test_findings_sorted_by_severity"
+        ],
+        "TestHelpers": [
+          "test_parse_version_standard",
+          "test_parse_version_with_operators",
+          "test_severity_from_cvss",
+          "test_is_scannable_file",
+          "test_is_scannable_skips_node_modules",
+          "test_entropy_calculation"
+        ]
+      },
+      "constants": [],
+      "lines": 574
+    }
+  },
+  "reverse_deps": {
+    "src/server/tools/compliance.py": [
+      "src/server/main.py"
+    ],
+    "src/server/tools/sca.py": [
+      "src/server/main.py"
+    ],
+    "src/server/tools/secret_scanner.py": [
+      "src/server/main.py"
+    ],
+    "src/server/tools/threat_model.py": [
+      "src/server/main.py"
+    ],
+    "src/utils/helpers.py": [
+      "src/server/tools/sca.py",
+      "src/server/tools/secret_scanner.py"
+    ]
+  },
+  "data_files": [
+    "data/policies/nist_800_53.yaml",
+    "data/policies/owasp_top10.yaml"
+  ],
+  "mcp_tools": [
+    {
+      "tool": "check_dependencies",
+      "handler": "check_dependencies",
+      "module": "src/server/tools/sca.py",
+      "test": "tests/test_sca.py, tests/test_tools.py"
+    },
+    {
+      "tool": "generate_threat_model",
+      "handler": "generate_threat_model_tool",
+      "module": "src/server/tools/threat_model.py",
+      "test": "tests/test_threat_model.py, tests/test_tools.py"
+    },
+    {
+      "tool": "audit_compliance",
+      "handler": "audit_compliance",
+      "module": "src/server/tools/compliance.py",
+      "test": "tests/test_compliance.py, tests/test_tools.py"
+    },
+    {
+      "tool": "scan_secrets",
+      "handler": "scan_secrets",
+      "module": "src/server/tools/secret_scanner.py",
+      "test": "tests/test_secret_scanner.py, tests/test_tools.py"
+    },
+    {
+      "tool": "scan_git_history",
+      "handler": "scan_git_history_tool",
+      "module": "src/server/tools/secret_scanner.py",
+      "test": "\u2014"
+    }
+  ],
+  "task_map": [
+    {
+      "task": "Add a secret detection pattern",
+      "read": "src/utils/helpers.py:SECRET_PATTERNS",
+      "edit": "src/utils/helpers.py"
+    },
+    {
+      "task": "Add a vulnerability to mock DB",
+      "read": "src/utils/helpers.py:OSV_MOCK_DB",
+      "edit": "src/utils/helpers.py"
+    },
+    {
+      "task": "Add/change NIST mapping",
+      "read": "data/policies/nist_800_53.yaml",
+      "edit": "data/policies/nist_800_53.yaml"
+    },
+    {
+      "task": "Add/change OWASP mapping",
+      "read": "data/policies/owasp_top10.yaml",
+      "edit": "data/policies/owasp_top10.yaml"
+    },
+    {
+      "task": "Add a new MCP tool",
+      "read": "src/server/main.py + any tool file for pattern",
+      "edit": "src/server/main.py + new src/server/tools/xxx.py"
+    },
+    {
+      "task": "Fix SCA/dependency logic",
+      "read": "src/server/tools/sca.py",
+      "edit": "src/server/tools/sca.py"
+    },
+    {
+      "task": "Fix threat model logic",
+      "read": "src/server/tools/threat_model.py:STRIDE_CATALOGUE",
+      "edit": "src/server/tools/threat_model.py"
+    },
+    {
+      "task": "Fix compliance logic",
+      "read": "src/server/tools/compliance.py + data/policies/",
+      "edit": "src/server/tools/compliance.py"
+    },
+    {
+      "task": "Fix secret scanner",
+      "read": "src/server/tools/secret_scanner.py",
+      "edit": "src/server/tools/secret_scanner.py"
+    },
+    {
+      "task": "Adjust token budget/eviction",
+      "read": "src/utils/context_manager.py:ContextWindow",
+      "edit": "src/utils/context_manager.py"
+    },
+    {
+      "task": "Add/fix a test",
+      "read": "tests/test_tools.py for integration pattern",
+      "edit": "relevant tests/ file"
+    },
+    {
+      "task": "Change OSV to live API",
+      "read": "src/server/tools/sca.py:_query_osv",
+      "edit": "src/server/tools/sca.py + .env GUARDIAN_LIVE_OSV=true"
+    }
+  ]
+}

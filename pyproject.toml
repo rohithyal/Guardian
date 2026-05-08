@@ -1,0 +1,84 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "guardian-ssdlc"
+version = "1.0.0"
+description = "Guardian S-SDLC Orchestrator — AI-powered Shift-Left Security Automation"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = ["security", "ssdlc", "mcp", "sca", "threat-modeling", "devops", "shift-left"]
+authors = [{ name = "Guardian S-SDLC", email = "security@example.com" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    # MCP Server
+    "fastmcp>=0.4.0",
+
+    # AI / LangChain Client
+    "langchain>=0.2.0",
+    "langchain-google-genai>=1.0.0",
+    "langchain-mcp-adapters>=0.1.0",
+    "langgraph>=0.1.0",
+
+    # Validation & Models
+    "pydantic>=2.5.0",
+
+    # CLI / Logging
+    "rich>=13.7.0",
+    "python-dotenv>=1.0.0",
+
+    # YAML policy loading
+    "pyyaml>=6.0.1",
+
+    # Google Generative AI SDK (pinned safe version)
+    "google-generativeai>=0.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+    "types-pyyaml>=6.0.12",
+]
+
+[project.scripts]
+guardian-server = "src.server.main:main"
+guardian = "src.client.consultant:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# ── Pytest ────────────────────────────────────────────────────────
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "--tb=short -v"
+
+# ── Ruff (Linter + Formatter) ─────────────────────────────────────
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM"]
+ignore = ["E501", "B008"]
+
+[tool.ruff.isort]
+known-first-party = ["src"]
+
+# ── mypy ──────────────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+exclude = ["tests/"]

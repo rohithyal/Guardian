@@ -1,0 +1,123 @@
+# NIST SP 800-53 Rev 5 — Security Control Mappings
+mappings:
+  outdated_dependency:
+    controls:
+      - id: "SA-12"
+        family: "System and Services Acquisition"
+        title: "Supply Chain Protection"
+        description: "Protect against supply-chain threats by validating component integrity and provenance."
+      - id: "SI-2"
+        family: "System and Information Integrity"
+        title: "Flaw Remediation"
+        description: "Identify, report, and correct information system flaws; test updates before installation."
+      - id: "RA-5"
+        family: "Risk Assessment"
+        title: "Vulnerability Monitoring and Scanning"
+        description: "Scan for vulnerabilities in the information system and hosted applications periodically."
+
+  known_cve:
+    controls:
+      - id: "SI-2"
+        family: "System and Information Integrity"
+        title: "Flaw Remediation"
+        description: "Remediate known vulnerabilities within organisationally defined time frames."
+      - id: "RA-5"
+        family: "Risk Assessment"
+        title: "Vulnerability Monitoring and Scanning"
+        description: "Employ vulnerability scanning tools that facilitate interoperability."
+      - id: "CM-8"
+        family: "Configuration Management"
+        title: "System Component Inventory"
+        description: "Develop and document an inventory of system components."
+
+  hardcoded_secret:
+    controls:
+      - id: "IA-5"
+        family: "Identification and Authentication"
+        title: "Authenticator Management"
+        description: "Manage system authenticators; prohibit embedding credentials in source code."
+      - id: "SC-28"
+        family: "System and Communications Protection"
+        title: "Protection of Information at Rest"
+        description: "Protect the confidentiality and integrity of information at rest."
+      - id: "AC-3"
+        family: "Access Control"
+        title: "Access Enforcement"
+        description: "Enforce approved authorisations for logical access to information."
+
+  api_key_exposure:
+    controls:
+      - id: "IA-5"
+        family: "Identification and Authentication"
+        title: "Authenticator Management"
+        description: "Change/refresh authenticators according to organisationally defined time periods."
+      - id: "SC-8"
+        family: "System and Communications Protection"
+        title: "Transmission Confidentiality and Integrity"
+        description: "Implement cryptographic mechanisms to prevent unauthorised disclosure during transmission."
+
+  spoofing:
+    controls:
+      - id: "IA-2"
+        family: "Identification and Authentication"
+        title: "Identification and Authentication (Organisational Users)"
+        description: "Uniquely identify and authenticate organisational users."
+      - id: "IA-8"
+        family: "Identification and Authentication"
+        title: "Identification and Authentication (Non-Organisational Users)"
+        description: "Uniquely identify and authenticate non-organisational users."
+
+  tampering:
+    controls:
+      - id: "SI-7"
+        family: "System and Information Integrity"
+        title: "Software, Firmware, and Information Integrity"
+        description: "Employ integrity verification tools to detect unauthorised changes."
+      - id: "AU-10"
+        family: "Audit and Accountability"
+        title: "Non-repudiation"
+        description: "Protect against an individual falsely denying having performed an action."
+
+  repudiation:
+    controls:
+      - id: "AU-2"
+        family: "Audit and Accountability"
+        title: "Event Logging"
+        description: "Identify the types of events the system is capable of logging."
+      - id: "AU-9"
+        family: "Audit and Accountability"
+        title: "Protection of Audit Information"
+        description: "Protect audit information and tools from unauthorised access and modification."
+
+  information_disclosure:
+    controls:
+      - id: "SC-28"
+        family: "System and Communications Protection"
+        title: "Protection of Information at Rest"
+        description: "Protect the confidentiality and integrity of information at rest."
+      - id: "AC-4"
+        family: "Access Control"
+        title: "Information Flow Enforcement"
+        description: "Enforce approved authorisations for controlling the flow of information."
+
+  denial_of_service:
+    controls:
+      - id: "SC-5"
+        family: "System and Communications Protection"
+        title: "Denial of Service Protection"
+        description: "Protect against or limit the effects of denial-of-service attacks."
+      - id: "CP-10"
+        family: "Contingency Planning"
+        title: "System Recovery and Reconstitution"
+        description: "Provide for the recovery and reconstitution of the system to a known state."
+
+  elevation_of_privilege:
+    controls:
+      - id: "AC-6"
+        family: "Access Control"
+        title: "Least Privilege"
+        description: "Employ least privilege; allow only authorised accesses necessary to accomplish tasks."
+      - id: "CM-7"
+        family: "Configuration Management"
+        title: "Least Functionality"
+        description: "Configure the system to provide only essential capabilities."
