@@ -28,6 +28,7 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 from src.server.tools.compliance import AuditComplianceInput, run_compliance_audit
+from src.server.tools.iac_scanner import ScanIaCInput, run_iac_scan
 from src.server.tools.sca import CheckDependenciesInput, run_sca
 from src.server.tools.secret_scanner import ScanSecretsInput, run_secret_scan, scan_git_history
 from src.server.tools.threat_model import SystemArchitectureInput, generate_threat_model
@@ -290,6 +291,47 @@ def scan_git_history_tool(
 
 
 # ──────────────────────────────────────────────────────────────────
+# Tool 6: IaC Misconfiguration Scanner
+# ──────────────────────────────────────────────────────────────────
+
+
+@mcp.tool(
+    name="scan_iac",
+    description=(
+        "Scans Dockerfiles and docker-compose files for security misconfigurations. "
+        "Detects 17 classes of risk across 9 Dockerfile rules (running as root, "
+        "floating image tags, curl-pipe-bash, ADD vs COPY, apt-get recommends, "
+        "secrets in ENV/ARG, chmod 777, missing HEALTHCHECK, sudo) and 8 "
+        "docker-compose rules (privileged mode, host networking, Docker socket "
+        "mount, sensitive host path mounts, all-interface port bindings, missing "
+        "resource limits, cap_add ALL, missing no-new-privileges). Returns a "
+        "structured report with rule IDs, severities, file locations, and "
+        "remediation steps."
+    ),
+)
+def scan_iac(target: str) -> dict[str, Any]:
+    """
+    Args:
+        target: Directory to scan recursively, or path to a single
+                Dockerfile / docker-compose.yml file.
+
+    Returns:
+        IaC misconfiguration report with per-finding rule IDs, severities,
+        file locations, and remediation recommendations.
+    """
+    logger.info("[bold cyan]Tool invoked:[/bold cyan] scan_iac")
+    try:
+        validated = ScanIaCInput(target=target)
+        return run_iac_scan(validated.target)
+    except ValidationError as exc:
+        logger.error("Validation error in scan_iac: %s", exc)
+        return {"error": "Input validation failed", "details": exc.errors()}
+    except Exception as exc:
+        logger.exception("Unexpected error in scan_iac")
+        return {"error": str(exc)}
+
+
+# ──────────────────────────────────────────────────────────────────
 # Entry-point
 # ──────────────────────────────────────────────────────────────────
 
@@ -299,7 +341,8 @@ def main() -> None:
         "[bold green]Guardian S-SDLC Orchestrator[/bold green] starting on stdio transport."
     )
     logger.info(
-        "Registered tools: check_dependencies, generate_threat_model, audit_compliance, scan_secrets, scan_git_history"
+        "Registered tools: check_dependencies, generate_threat_model, audit_compliance, "
+        "scan_secrets, scan_git_history, scan_iac"
     )
     mcp.run(transport="stdio")
 
